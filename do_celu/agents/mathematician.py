@@ -19,6 +19,16 @@ class MathAgent(agent.Agent):
         async def on_end(self):
             pass
 
+    class RecvRequestBestPath(CyclicBehaviour):
+        async def on_start(self):
+            pass
+
+        async def run(self):
+            pass
+
+        async def on_end(self):
+            pass
+
     async def setup(self):
         print("Hello World! I'm agent {}".format(str(self.jid)))
         self.my_behav = self.MyBehav()

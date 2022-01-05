@@ -19,7 +19,7 @@ class DriverAgent(agent.Agent):
         async def on_end(self):
             pass
 
-    class InformClientLongerTrip(CyclicBehaviour):
+    class RecvRequestDriverData(CyclicBehaviour):
         async def on_start(self):
             pass
 
@@ -29,47 +29,7 @@ class DriverAgent(agent.Agent):
         async def on_end(self):
             pass
 
-    class CallForProposalStandby(CyclicBehaviour):
-        async def on_start(self):
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class AcceptClientVerification(CyclicBehaviour):
-        async def on_start(self):
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class RejectClientVerification(CyclicBehaviour):
-        async def on_start(self):
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class InformDriverInicialization(CyclicBehaviour):
-        async def on_start(self):
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class InformDriverDataUpdate(CyclicBehaviour):  # Może równa z InformDriverData
+    class RecvInformPathChange(CyclicBehaviour):
         async def on_start(self):
             pass
 

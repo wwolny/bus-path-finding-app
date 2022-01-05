@@ -59,17 +59,7 @@ class ManagerAgent(agent.Agent):
         async def on_end(self):
             pass
 
-    class InformExtraCharge(CyclicBehaviour):
-        async def on_start(self):
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class SubscribeDriver(CyclicBehaviour):
+    class CallForProposalChoosePath(CyclicBehaviour):
         async def on_start(self):
             pass
 

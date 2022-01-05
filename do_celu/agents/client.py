@@ -29,7 +29,7 @@ class ClientAgent(agent.Agent):
         async def on_end(self):
             pass
 
-    class InformTicketValidation(CyclicBehaviour):
+    class RecvInformBestPath(CyclicBehaviour):
         async def on_start(self):
             pass
 
@@ -39,7 +39,17 @@ class ClientAgent(agent.Agent):
         async def on_end(self):
             pass
 
-    class ProposeTicketValidation(CyclicBehaviour):
+    class Recv(CyclicBehaviour):
+        async def on_start(self):
+            pass
+
+        async def run(self):
+            pass
+
+        async def on_end(self):
+            pass
+
+    class RecvAcceptProposalClientPath(CyclicBehaviour):
         async def on_start(self):
             pass
 
