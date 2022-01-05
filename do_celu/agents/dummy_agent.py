@@ -13,7 +13,7 @@ class DummyAgent(agent.Agent):
     print("Hello World! I'm agent {}".format(str(self.jid)))
 
 
-dummy = DummyAgent("your_jid@your_xmpp_server", "your_password")
+dummy = DummyAgent("aasd_test@0nl1ne.at", "sdf&@#mnSSAD")
 future = dummy.start()
 future.result()
 
