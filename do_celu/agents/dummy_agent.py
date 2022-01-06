@@ -13,7 +13,7 @@ class DummyAgent(agent.Agent):
     print("Hello World! I'm agent {}".format(str(self.jid)))
 
 
-dummy = DummyAgent("aasd_test@0nl1ne.at", "sdf&@#mnSSAD")
+dummy = DummyAgent("client@localhost", "client_password")
 future = dummy.start()
 future.result()
 

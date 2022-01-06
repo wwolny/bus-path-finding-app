@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  aasd_xmpp:
+    container_name: ejabberd
+    image: ejabberd/ecs
+    ports:
+      - 5222:5222
