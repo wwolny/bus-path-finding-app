@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Performatives(Enum, str):
+class Performatives(str, Enum):
     INFORM = 'inform'
     REQUEST = 'request'
     PROPOSE = 'propose'
