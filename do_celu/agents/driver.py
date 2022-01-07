@@ -4,42 +4,176 @@
 # Copyright 2022 Agenty 007
 #
 
-from spade import agent
-from spade.behaviour import CyclicBehaviour
+import json
+from logging import Logger
+from time import sleep
+from typing import Any, Dict, Optional
+from spade import agent, quit_spade
+from spade.message import Message
+from spade.template import Template
+
+from do_celu.behaviours import BaseOneShotBehaviour, BaseCyclicBehaviour
+from do_celu.config import Config, get_config
+from do_celu.context import get_logger
+from do_celu.utils.job_exit_code import JobExitCode
+from do_celu.utils.performatives import Performatives
+
+LOGGER_NAME = get_config().DRIVER_LOGGER_NAME
 
 
 class DriverAgent(agent.Agent):
-    class InformDriverData(CyclicBehaviour):
+    # Behaviours
+    inform_driver_data: 'InformDriverData'
+    receive_request_driver_data: 'ReceiveRequestDriverData'
+    receive_request_driver_data_template: Template
+    receive_inform_path_change: 'ReceiveInformPathChange'
+    receive_inform_path_change_template: Template
+    # Agent state
+    __capacity: int
+    __current_path: Optional[Any] = None
+    __geolocation: Dict[str, Any]
+
+    _logger: Logger
+    _config: Config
+
+    def __init__(
+        self,
+        jid: str,
+        password: str,
+        capacity: int,
+        verify_security: bool = False,
+    ):
+        super().__init__(jid, password, verify_security=verify_security)
+        self._config = get_config()
+        self._logger = get_logger(LOGGER_NAME)
+        self.__capacity = capacity
+        self.__geolocation = {'x': 52.21905021340178, 'y': 21.011905061692943}
+
+    class InformDriverData(BaseOneShotBehaviour):
+        agent: 'DriverAgent'
+
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
         async def on_start(self):
-            pass
+            self._logger.debug('InformDriverData running...')
 
         async def run(self):
-            pass
+            # await self.agent.receive_request_driver_data.join()
+            msg = Message(to=self._config.MANAGER_JID)
+            msg.set_metadata("performative", Performatives.INFORM)  # Set the "inform" FIPA performative
+            msg.set_metadata("ontology", self._config.ONTOLOGY)  # Set the ontology of the message content
+            msg.set_metadata("language", "JSON")  # Set the language of the message content
+            msg.body = json.dumps(self.agent._get_state())
+
+            try:
+                await self.send(msg)
+                self._logger.debug('Message send!')
+            except Exception as e:
+                self._logger.error(e)
+                self.kill(JobExitCode.FAILURE)
+                return
 
         async def on_end(self):
-            pass
+            self._logger.debug('InformDriverData ending...')
+            self.exit_code = JobExitCode.SUCCESS
 
-    class RecvRequestDriverData(CyclicBehaviour):
+    class ReceiveRequestDriverData(BaseCyclicBehaviour):
+        agent: 'DriverAgent'
+
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
         async def on_start(self):
-            pass
+            self._logger.debug('ReceiveRequestDriverData running...')
 
         async def run(self):
-            pass
+            msg = await self.receive()
+            if msg:
+                self._logger.debug(f'Message received with content: {msg.body}')
+                if self.agent.inform_driver_data not in self.agent.behaviours:
+                    self._logger.debug('InformDriverData renewed')
+                    await self.agent._setup_inform_driver_data()
+                    self.agent.add_behaviour(self.agent.inform_driver_data)
 
         async def on_end(self):
-            pass
+            self._logger.debug('ReceiveRequestDriverData ending...')
 
-    class RecvInformPathChange(CyclicBehaviour):
+    class ReceiveInformPathChange(BaseCyclicBehaviour):
+        agent: 'DriverAgent'
+
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
         async def on_start(self):
-            pass
+            self._logger.debug('ReceiveInformPathChange running...')
 
         async def run(self):
-            pass
+            msg = await self.receive()
+            if msg:
+                self._logger.debug(f'Message received with content: {msg.body}')
+                body = json.loads(msg.body)
+                path = body['path']
+                self._logger.debug(f'New path: {path}')
+                self.agent.set_current_path(path)
 
         async def on_end(self):
-            pass
+            self._logger.debug('ReceiveInformPathChange ending...')
 
     async def setup(self):
-        print("Hello World! I'm agent {}".format(str(self.jid)))
-        self.my_behav = self.MyBehav()
-        self.add_behaviour(self.my_behav)
+        self._logger.info('DriverAgent started')
+        await self._setup_receive_request_driver_data()
+        await self._setup_receive_inform_path_change()
+        await self._setup_inform_driver_data()
+        self.add_behaviour(self.receive_request_driver_data, self.receive_request_driver_data_template)
+        self.add_behaviour(self.receive_inform_path_change, self.receive_inform_path_change_template)
+
+    def set_current_path(self, path: Any):
+        self.__current_path = path
+
+    async def _setup_receive_request_driver_data(self):
+        self.receive_request_driver_data_template = Template()
+        self.receive_request_driver_data_template.set_metadata('ontology', self._config.ONTOLOGY)
+        self.receive_request_driver_data_template.set_metadata('performative', Performatives.INFORM)
+        self.receive_request_driver_data_template.set_metadata('behaviour', 'driver_data')
+        self.receive_request_driver_data = self.ReceiveRequestDriverData()
+
+    async def _setup_receive_inform_path_change(self):
+        self.receive_inform_path_change_template = Template()
+        self.receive_inform_path_change_template.set_metadata('ontology', self._config.ONTOLOGY)
+        self.receive_inform_path_change_template.set_metadata('performative', Performatives.INFORM)
+        self.receive_inform_path_change_template.set_metadata('behaviour', 'path_change')
+        self.receive_inform_path_change = self.ReceiveInformPathChange()
+
+    async def _setup_inform_driver_data(self):
+        self.inform_driver_data = self.InformDriverData()
+
+    def _get_state(self) -> Dict[str, Any]:
+        return {
+            'capacity': self.__capacity,
+            'current_path': self.__current_path,
+            'geolocation': self.__geolocation,
+        }
+
+
+if __name__ == '__main__':
+    config = get_config()
+    logger = get_logger(config.DRIVER_LOGGER_NAME)
+    driver = DriverAgent(
+        config.DRIVER_JID,
+        config.DRIVER_PASSWORD,
+        capacity=50,
+    )
+
+    future = driver.start()
+    future.result()
+
+    while driver.is_alive():
+        try:
+            sleep(1)
+        except KeyboardInterrupt:
+            break
+
+    driver.stop()
+    logger.debug('Driver agent stopped')
+    quit_spade()
