@@ -9,6 +9,8 @@ from spade.behaviour import CyclicBehaviour
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 from do_celu.utils.performatives import Performatives
+from do_celu.behaviours import BaseOneShotBehaviour
+from do_celu.config import Config
 
 class ManagerAgent(agent.Agent):
     class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
