@@ -55,7 +55,7 @@ class ManagerAgent(agent.Agent):
     class RequestBestPaths(BaseOneShotBehaviour):
         async def run(self):
             print('Requesting best paths...')
-            msg = Message(to='mathematician@localhost')
+            msg = Message(to=Config.MATHEMATICIAN_JID)
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
@@ -127,6 +127,7 @@ class ManagerAgent(agent.Agent):
 # manager = ManagerAgent('manager@localhost', 'manager_password')
 # future = manager.start()
 # manager.add_behaviour(manager.RequestDriverData())
+# manager.add_behaviour(manager.RequestBestPaths())
 # future.result()
 #
 # manager.stop()

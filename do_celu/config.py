@@ -26,6 +26,10 @@ class Config(BaseSettings):
     CLIENT_LOGGER_NAME: str = 'client_agent'
     CLIENT_JID: str
     CLIENT_PASSWORD: str
+    # Mathematician
+    MATHEMATICIAN_LOGGER_NAME: str = 'mathematician_agent'
+    MATHEMATICIAN_JID: str
+    MATHEMATICIAN_PASSWORD: str
 
     class Config:
         env_file = ".env"
