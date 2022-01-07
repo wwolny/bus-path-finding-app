@@ -8,8 +8,19 @@ from spade import agent
 from spade.behaviour import CyclicBehaviour
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
+from do_celu.utils.performatives import Performatives
 
 class ManagerAgent(agent.Agent):
+    class ReceiveWelcomeDriverMsg(OneShotBehaviour):
+        async def run(self):
+            print('Receiving welcome driver msg...')
+            msg = await self.receive(timeout=30)
+            if msg:
+                print("Receiving welcome driver msg successful - Body: {}".format(msg.body))
+                # TODO add to driver list (contacts)
+            else:
+                print("Receiving welcome driver msg failed after 30 seconds")
+
     class ReceiveAvailableDriversRequest(OneShotBehaviour):
         async def run(self):
             print('Receiving available drivers request...')
@@ -24,7 +35,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Requesting driver data...')
             msg = Message(to='driver@localhost') #TODO send to all available drivers
-            msg.set_metadata('performative', 'request')
+            msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
             print('Requesting driver data successful')
@@ -43,7 +54,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Requesting best paths...')
             msg = Message(to='mathematician@localhost')
-            msg.set_metadata('performative', 'request')
+            msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
             print('Requesting best paths successful')
@@ -62,7 +73,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Informing client about best paths...')
             msg = Message(to='client@localhost') #TODO select good client
-            msg.set_metadata('performative', 'inform')
+            msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
             print('Informing client about best paths successful')
@@ -71,7 +82,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Call for proposal client choosing path...')
             msg = Message(to='client@localhost') #TODO select good client
-            msg.set_metadata('performative', 'call_for_proposal')
+            msg.set_metadata('performative', Performatives.CALL_FOR_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
             print('Call for proposal client choosing path successful')
@@ -91,7 +102,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Informing driver about path change...')
             msg = Message(to='driver@localhost') #TODO select good driver
-            msg.set_metadata('performative', 'inform')
+            msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
             print('Informing driver about path change successful')
@@ -100,10 +111,20 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Accepting client path proposal...')
             msg = Message(to='client@localhost') #TODO select good client
-            msg.set_metadata('performative', 'accept_proposal')
+            msg.set_metadata('performative', Performatives.ACCEPT_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
             print('Accepting client path proposal successful')
 
     async def setup(self):
         print("Hello World! I'm agent {}".format(str(self.jid)))
+        # beh = self.RequestDriverData()
+        # self.add_behaviour(beh)
+
+#TODO temp test
+# manager = ManagerAgent('manager@localhost', 'manager_password')
+# future = manager.start()
+# manager.add_behaviour(manager.RequestDriverData())
+# future.result()
+#
+# manager.stop()
