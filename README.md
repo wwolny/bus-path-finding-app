@@ -23,3 +23,15 @@ In case of development install packages stored in the `requirements-dev.txt` fil
 To start XMPP server go to `containers` directory and run command `docker-compose up`. To stop container hit `ctrl+c` or run command `docker-compose stop` in other terminal (the same directory).
 
 New users are added via `add_agents.sh` script. To execute script run eg. `source add_agents.sh`.
+
+## Agents
+### Driver
+Implemented as FSM.
+
+States:
+* init - wait for other agents to be available
+* chat - ready to take passengers
+* dnf - full
+
+Subscribe to all clients
+
