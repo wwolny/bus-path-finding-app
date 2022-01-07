@@ -11,7 +11,7 @@ from spade.message import Message
 from do_celu.utils.performatives import Performatives
 
 class ManagerAgent(agent.Agent):
-    class ReceiveWelcomeDriverMsg(OneShotBehaviour):
+    class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
         async def run(self):
             print('Receiving welcome driver msg...')
             msg = await self.receive(timeout=30)
@@ -21,7 +21,7 @@ class ManagerAgent(agent.Agent):
             else:
                 print("Receiving welcome driver msg failed after 30 seconds")
 
-    class ReceiveAvailableDriversRequest(OneShotBehaviour):
+    class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
         async def run(self):
             print('Receiving available drivers request...')
             msg = await self.receive(timeout=30)
@@ -31,7 +31,7 @@ class ManagerAgent(agent.Agent):
             else:
                 print("Receiving available drivers request failed after 30 seconds")
 
-    class RequestDriverData(OneShotBehaviour):
+    class RequestDriverData(BaseOneShotBehaviour):
         async def run(self):
             print('Requesting driver data...')
             msg = Message(to='driver@localhost') #TODO send to all available drivers
@@ -40,7 +40,7 @@ class ManagerAgent(agent.Agent):
             await self.send(msg)
             print('Requesting driver data successful')
 
-    class ReceiveDriverData(OneShotBehaviour):
+    class ReceiveDriverData(BaseOneShotBehaviour):
         async def run(self):
             print('Receiving driver data...')
             msg = await self.receive(timeout=30)
@@ -50,7 +50,7 @@ class ManagerAgent(agent.Agent):
             else:
                 print("Receiving driver data failed after 30 seconds")
 
-    class RequestBestPaths(OneShotBehaviour):
+    class RequestBestPaths(BaseOneShotBehaviour):
         async def run(self):
             print('Requesting best paths...')
             msg = Message(to='mathematician@localhost')
@@ -59,7 +59,7 @@ class ManagerAgent(agent.Agent):
             await self.send(msg)
             print('Requesting best paths successful')
 
-    class ReceiveBestPaths(OneShotBehaviour):
+    class ReceiveBestPaths(BaseOneShotBehaviour):
         async def run(self):
             print('Receiving best paths...')
             msg = await self.receive(timeout=30)
@@ -69,7 +69,7 @@ class ManagerAgent(agent.Agent):
             else:
                 print("Receiving best paths failed after 30 seconds")
 
-    class InformClientBestPaths(OneShotBehaviour):
+    class InformClientBestPaths(BaseOneShotBehaviour):
         async def run(self):
             print('Informing client about best paths...')
             msg = Message(to='client@localhost') #TODO select good client
@@ -78,7 +78,7 @@ class ManagerAgent(agent.Agent):
             await self.send(msg)
             print('Informing client about best paths successful')
 
-    class CFPClientChoosePath(OneShotBehaviour):
+    class CFPClientChoosePath(BaseOneShotBehaviour):
         async def run(self):
             print('Call for proposal client choosing path...')
             msg = Message(to='client@localhost') #TODO select good client
@@ -87,7 +87,7 @@ class ManagerAgent(agent.Agent):
             await self.send(msg)
             print('Call for proposal client choosing path successful')
 
-    class ReceiveClientPathProposal(OneShotBehaviour):
+    class ReceiveClientPathProposal(BaseOneShotBehaviour):
         async def run(self):
             print('Receiving client path proposal...')
             msg = await self.receive(timeout=30)
@@ -98,7 +98,7 @@ class ManagerAgent(agent.Agent):
             else:
                 print("Receiving client path proposal failed after 30 seconds")
 
-    class InformDriverPathChange(OneShotBehaviour):
+    class InformDriverPathChange(BaseOneShotBehaviour):
         async def run(self):
             print('Informing driver about path change...')
             msg = Message(to='driver@localhost') #TODO select good driver
@@ -107,7 +107,7 @@ class ManagerAgent(agent.Agent):
             await self.send(msg)
             print('Informing driver about path change successful')
 
-    class AcceptClientPathProposal(OneShotBehaviour):
+    class AcceptClientPathProposal(BaseOneShotBehaviour):
         async def run(self):
             print('Accepting client path proposal...')
             msg = Message(to='client@localhost') #TODO select good client
