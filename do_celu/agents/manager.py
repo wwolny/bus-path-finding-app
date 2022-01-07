@@ -16,7 +16,7 @@ class ManagerAgent(agent.Agent):
             msg = await self.receive(timeout=30)
             if msg:
                 print("Receiving available drivers request successful - Body: {}".format(msg.body))
-                # TODO trigger getting driver data
+                # TODO trigger getting driver data (find all available drivers and RequestDriverData)
             else:
                 print("Receiving available drivers request failed after 30 seconds")
 
@@ -71,7 +71,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Call for proposal client choosing path...')
             msg = Message(to='client@localhost') #TODO select good client
-            msg.set_metadata('performative', 'call_for_proposal') #TODO check performative
+            msg.set_metadata('performative', 'call_for_proposal')
             # msg.body = #TODO
             await self.send(msg)
             print('Call for proposal client choosing path successful')
@@ -100,7 +100,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             print('Accepting client path proposal...')
             msg = Message(to='client@localhost') #TODO select good client
-            msg.set_metadata('performative', 'accept_proposal') #TODO check performative
+            msg.set_metadata('performative', 'accept_proposal')
             # msg.body = #TODO
             await self.send(msg)
             print('Accepting client path proposal successful')
