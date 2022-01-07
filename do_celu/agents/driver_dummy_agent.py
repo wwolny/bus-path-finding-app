@@ -9,29 +9,50 @@ import time
 
 from spade import agent, quit_spade
 from spade.behaviour import CyclicBehaviour
-from spade.message import Message
+
+from do_celu.messages.driver import DriverDataMessage, PathChangeMessage
 
 
 class DummyAgent(agent.Agent):
-    my_behaviour: 'MyBehaviour'
+    path_change: 'PathChange'
+    data_data: 'DriverData'
 
-    class MyBehaviour(CyclicBehaviour):
+    class PathChange(CyclicBehaviour):
         iterator = 0
 
         async def run(self):
-            msg = Message(to='driver@localhost')
-            msg.set_metadata("performative", 'inform')  # Set the "inform" FIPA performative
-            msg.set_metadata("ontology", 'DoCeluMainOntology')  # Set the ontology of the message content
-            msg.set_metadata("language", "JSON")  # Set the language of the message content
-            msg.set_metadata("selector", "path_change")
+            msg = PathChangeMessage(to='driver@localhost')
             msg.body = json.dumps({'iterator': self.iterator, 'path': 'new_path'})
             try:
                 await self.send(msg)
-                print(f'Message send! Iteration {self.iterator}')
+                print(f'Message PathChange send! Iteration {self.iterator}')
             except Exception:
                 return
             if self.iterator > 1 and self.iterator % 5 == 0:
                 await asyncio.sleep(10)
+            else:
+                await asyncio.sleep(1)
+            self.iterator += 1
+
+        async def on_end(self) -> None:
+            await self.agent.stop()
+            print(f'Behaviour finished with exit code {self.exit_code}.')
+
+    class DriverData(CyclicBehaviour):
+        iterator = 0
+
+        async def run(self):
+            msg = DriverDataMessage(to='driver@localhost')
+            msg.body = json.dumps({
+                'iterator': self.iterator,
+            })
+            try:
+                await self.send(msg)
+                print(f'Message DriverData send! Iteration {self.iterator}')
+            except Exception:
+                return
+            if self.iterator > 1 and self.iterator % 5 == 0:
+                await asyncio.sleep(5)
             else:
                 await asyncio.sleep(2)
             self.iterator += 1
@@ -42,8 +63,10 @@ class DummyAgent(agent.Agent):
 
     async def setup(self):
         print('Agent starting...')
-        self.my_behaviour = self.MyBehaviour()
-        self.add_behaviour(self.my_behaviour)
+        self.path_change = self.PathChange()
+        self.data_data = self.DriverData()
+        self.add_behaviour(self.path_change)
+        self.add_behaviour(self.data_data)
 
 
 if __name__ == '__main__':
