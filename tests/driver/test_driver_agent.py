@@ -17,7 +17,7 @@ from do_celu.messages.driver import DriverDataMessage, DriverDataTemplate, PathC
 
 
 @pytest.fixture
-def driver_agent() -> Generator[DriverAgent, None, None]:
+def driver_agent() -> DriverAgent:
     config = get_config()
     driver = DriverAgent(
         config.DRIVER_JID,
@@ -101,6 +101,9 @@ async def test_path_change(driver_agent: DriverAgent):
             body=json.dumps({'path': new_path}),
         ))
     await asyncio.sleep(0.1)
+
+    driver_agent.stop()
+    quit_spade()
 
     state = driver_agent._get_state()
     assert state['current_path'] == new_path
