@@ -39,7 +39,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             print('Requesting driver data...')
-            msg = Message(to='driver@localhost')  #TODO send to all available drivers
+            msg = Message(to='driver@localhost')  # TODO send to all available drivers
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
@@ -52,7 +52,8 @@ class ManagerAgent(agent.Agent):
             msg = await self.receive(timeout=30)
             if msg:
                 print("Receiving driver data successful - Body: {}".format(msg.body))
-                # TODO trigger getting best paths (maybe after x seconds after first respond) - prob move to other behavior
+                # TODO trigger getting best paths (maybe after x seconds after first respond)
+                # - prob move to other behavior
             else:
                 print("Receiving driver data failed after 30 seconds")
 
@@ -73,7 +74,7 @@ class ManagerAgent(agent.Agent):
             msg = await self.receive(timeout=30)
             if msg:
                 print("Receiving best paths successful - Body: {}".format(msg.body))
-                #TODO send to client
+                # TODO send to client
             else:
                 print("Receiving best paths failed after 30 seconds")
 
@@ -81,7 +82,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             print('Informing client about best paths...')
-            msg = Message(to='client@localhost')  #TODO select good client
+            msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
@@ -91,7 +92,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             print('Call for proposal client choosing path...')
-            msg = Message(to='client@localhost')  #TODO select good client
+            msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.CALL_FOR_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
@@ -104,8 +105,8 @@ class ManagerAgent(agent.Agent):
             msg = await self.receive(timeout=30)
             if msg:
                 print("Receiving client path proposal successful - Body: {}".format(msg.body))
-                #TODO send info to driver
-                #TODO after that accept proposal
+                # TODO send info to driver
+                # TODO after that accept proposal
             else:
                 print("Receiving client path proposal failed after 30 seconds")
 
@@ -113,7 +114,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             print('Informing driver about path change...')
-            msg = Message(to='driver@localhost')  #TODO select good driver
+            msg = Message(to='driver@localhost')  # TODO select good driver
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
@@ -123,7 +124,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             print('Accepting client path proposal...')
-            msg = Message(to='client@localhost')  #TODO select good client
+            msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.ACCEPT_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
@@ -135,7 +136,7 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour(beh)
 
 
-#TODO temp test
+# TODO temp test
 # manager = ManagerAgent('manager@localhost', 'manager_password')
 # future = manager.start()
 # manager.add_behaviour(manager.RequestDriverData())
