@@ -5,15 +5,16 @@
 #
 
 from spade import agent
-from spade.behaviour import CyclicBehaviour
-from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 from do_celu.utils.performatives import Performatives
 from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config
 
+
 class ManagerAgent(agent.Agent):
+
     class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
+
         async def run(self):
             print('Receiving welcome driver msg...')
             msg = await self.receive(timeout=30)
@@ -24,6 +25,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving welcome driver msg failed after 30 seconds")
 
     class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
+
         async def run(self):
             print('Receiving available drivers request...')
             msg = await self.receive(timeout=30)
@@ -34,15 +36,17 @@ class ManagerAgent(agent.Agent):
                 print("Receiving available drivers request failed after 30 seconds")
 
     class RequestDriverData(BaseOneShotBehaviour):
+
         async def run(self):
             print('Requesting driver data...')
-            msg = Message(to='driver@localhost') #TODO send to all available drivers
+            msg = Message(to='driver@localhost')  #TODO send to all available drivers
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
             print('Requesting driver data successful')
 
     class ReceiveDriverData(BaseOneShotBehaviour):
+
         async def run(self):
             print('Receiving driver data...')
             msg = await self.receive(timeout=30)
@@ -53,6 +57,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving driver data failed after 30 seconds")
 
     class RequestBestPaths(BaseOneShotBehaviour):
+
         async def run(self):
             print('Requesting best paths...')
             msg = Message(to=Config.MATHEMATICIAN_JID)
@@ -62,6 +67,7 @@ class ManagerAgent(agent.Agent):
             print('Requesting best paths successful')
 
     class ReceiveBestPaths(BaseOneShotBehaviour):
+
         async def run(self):
             print('Receiving best paths...')
             msg = await self.receive(timeout=30)
@@ -72,24 +78,27 @@ class ManagerAgent(agent.Agent):
                 print("Receiving best paths failed after 30 seconds")
 
     class InformClientBestPaths(BaseOneShotBehaviour):
+
         async def run(self):
             print('Informing client about best paths...')
-            msg = Message(to='client@localhost') #TODO select good client
+            msg = Message(to='client@localhost')  #TODO select good client
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
             print('Informing client about best paths successful')
 
     class CFPClientChoosePath(BaseOneShotBehaviour):
+
         async def run(self):
             print('Call for proposal client choosing path...')
-            msg = Message(to='client@localhost') #TODO select good client
+            msg = Message(to='client@localhost')  #TODO select good client
             msg.set_metadata('performative', Performatives.CALL_FOR_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
             print('Call for proposal client choosing path successful')
 
     class ReceiveClientPathProposal(BaseOneShotBehaviour):
+
         async def run(self):
             print('Receiving client path proposal...')
             msg = await self.receive(timeout=30)
@@ -101,18 +110,20 @@ class ManagerAgent(agent.Agent):
                 print("Receiving client path proposal failed after 30 seconds")
 
     class InformDriverPathChange(BaseOneShotBehaviour):
+
         async def run(self):
             print('Informing driver about path change...')
-            msg = Message(to='driver@localhost') #TODO select good driver
+            msg = Message(to='driver@localhost')  #TODO select good driver
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
             print('Informing driver about path change successful')
 
     class AcceptClientPathProposal(BaseOneShotBehaviour):
+
         async def run(self):
             print('Accepting client path proposal...')
-            msg = Message(to='client@localhost') #TODO select good client
+            msg = Message(to='client@localhost')  #TODO select good client
             msg.set_metadata('performative', Performatives.ACCEPT_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
@@ -122,6 +133,7 @@ class ManagerAgent(agent.Agent):
         print("Hello World! I'm agent {}".format(str(self.jid)))
         # beh = self.RequestDriverData()
         # self.add_behaviour(beh)
+
 
 #TODO temp test
 # manager = ManagerAgent('manager@localhost', 'manager_password')
