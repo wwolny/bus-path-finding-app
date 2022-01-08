@@ -30,8 +30,8 @@ class BaseMessage(MessageBase, ABC):
             metadata=metadata,
         )
         self._config = get_config()
-        self._set_custom_metadata()
+        self._set_custom_properties()
 
     @abstractmethod
-    def _set_custom_metadata(self) -> None:
+    def _set_custom_properties(self) -> None:
         pass

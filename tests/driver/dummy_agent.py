@@ -15,7 +15,7 @@ from do_celu.messages.driver import DriverDataMessage, PathChangeMessage
 
 class DummyAgent(agent.Agent):
     path_change: 'PathChange'
-    data_data: 'DriverData'
+    driver_data: 'DriverData'
 
     class PathChange(CyclicBehaviour):
         iterator = 0
@@ -63,15 +63,15 @@ class DummyAgent(agent.Agent):
 
     async def setup(self):
         print('Agent starting...')
-        self.path_change = self.PathChange()
-        self.data_data = self.DriverData()
-        self.add_behaviour(self.path_change)
-        self.add_behaviour(self.data_data)
 
 
 if __name__ == '__main__':
     dummy = DummyAgent("manager@localhost", "manager_password")
     future = dummy.start()
+    dummy.path_change = dummy.PathChange()
+    dummy.driver_data = dummy.DriverData()
+    dummy.add_behaviour(dummy.path_change)
+    dummy.add_behaviour(dummy.driver_data)
     future.result()
 
     print('Wait until user interrupts with ctrl+c')

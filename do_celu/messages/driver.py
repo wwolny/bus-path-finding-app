@@ -12,7 +12,7 @@ from do_celu.messages.base_message import BaseMessage
 
 class _DriverDataMessageBase(BaseMessage):
 
-    def _set_custom_metadata(self) -> None:
+    def _set_custom_properties(self) -> None:
         self.set_metadata("performative", Performatives.REQUEST.value)
         self.set_metadata("ontology", self._config.ONTOLOGY)
         self.set_metadata("language", "JSON")
@@ -29,7 +29,7 @@ class DriverDataMessage(_DriverDataMessageBase, Message):
 
 class _PathChangeMessageBase(BaseMessage):
 
-    def _set_custom_metadata(self) -> None:
+    def _set_custom_properties(self) -> None:
         self.set_metadata("performative", Performatives.INFORM.value)
         self.set_metadata("ontology", self._config.ONTOLOGY)
         self.set_metadata("language", "JSON")

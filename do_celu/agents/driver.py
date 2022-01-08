@@ -8,6 +8,7 @@ import json
 from logging import Logger
 from time import sleep
 from typing import Any, Dict, Optional
+
 from spade import agent, quit_spade
 from spade.message import Message
 
@@ -41,13 +42,14 @@ class DriverAgent(agent.Agent):
         jid: str,
         password: str,
         capacity: int,
+        geolocation: Dict[str, Any],
         verify_security: bool = False,
     ):
         super().__init__(jid, password, verify_security=verify_security)
         self._config = get_config()
         self._logger = get_logger(LOGGER_NAME)
         self.__capacity = capacity
-        self.__geolocation = {'x': 52.21905021340178, 'y': 21.011905061692943}
+        self.__geolocation = geolocation
 
     class InformDriverData(BaseOneShotBehaviour):
         agent: 'DriverAgent'
@@ -91,7 +93,7 @@ class DriverAgent(agent.Agent):
             msg = await self.receive()
             if msg:
                 self._logger.debug(f'Message received with content: {msg.body}')
-                if self.agent.inform_driver_data not in self.agent.behaviours:
+                if not self.agent.has_behaviour(self.agent.inform_driver_data):
                     self._logger.debug('InformDriverData renewed')
                     await self.agent._setup_inform_driver_data()
                     self.agent.add_behaviour(self.agent.inform_driver_data)
@@ -157,6 +159,10 @@ if __name__ == '__main__':
         config.DRIVER_JID,
         config.DRIVER_PASSWORD,
         capacity=50,
+        geolocation={
+            'x': 52.21905021340178,
+            'y': 21.011905061692943,
+        },
     )
 
     future = driver.start()
