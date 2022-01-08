@@ -7,3 +7,4 @@ yapf~=0.31.0
 
 # Unit test
 pytest~=6.2.5
+pytest-asyncio~=0.16.0

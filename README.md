@@ -26,12 +26,21 @@ New users are added via `add_agents.sh` script. To execute script run eg. `sourc
 
 ## Agents
 ### Driver
-Implemented as FSM.
+Agent implementing Driver role.
 
-States:
-* init - wait for other agents to be available
-* chat - ready to take passengers
-* dnf - full
+Internal state:
+* geolocation - X and Y coordinates
+* current_path - current path for the driver
+* capacity - left space (seats) in the driver vehicle
 
-Subscribe to all clients
+Behaviours:
+* ReceiveInformPathChange - changes current path
+* ReceiveRequestDriverData - request driver data (state)
+* InformDriverData - Inform Manager with a current state
 
+## Tests 
+To run test execute command:
+```
+PYTHONPATH=$(pwd) pytest tests
+```
+`PYTHONPATH` is needed for setting path to `do_celu` package.
