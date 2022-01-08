@@ -5,15 +5,16 @@
 #
 
 import json
+from datetime import datetime
 from logging import Logger
 from time import sleep
 from typing import Any, Dict, Optional
 
-from aioxmpp.structs import PresenceShow
+import aioxmpp
 from spade import agent, quit_spade
 from spade.message import Message
 
-from do_celu.behaviours import BaseOneShotBehaviour, BaseCyclicBehaviour
+from do_celu.behaviours import BaseOneShotBehaviour, BaseCyclicBehaviour, BasePeriodicBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
 from do_celu.messages.driver import DriverDataTemplate, PathChangeTemplate
@@ -26,6 +27,7 @@ LOGGER_NAME = get_config().DRIVER_LOGGER_NAME
 class DriverAgent(agent.Agent):
     # Behaviours
     inform_driver_data: 'InformDriverData'
+    subscribe_to_manager: 'SubscribeToManager'
     receive_request_driver_data: 'ReceiveRequestDriverData'
     receive_request_driver_data_template: DriverDataTemplate
     receive_inform_path_change: 'ReceiveInformPathChange'
@@ -123,23 +125,51 @@ class DriverAgent(agent.Agent):
         async def on_end(self):
             self._logger.debug('ReceiveInformPathChange ending...')
 
-    def on_subscribe(self, jid: str):
-        self._logger.info(f'Agent {jid.split("@")[0]} asked for subscription.')
-        if jid == self._config.MANAGER_JID:
-            self.presence.approve(jid)
-            self.presence.subscribe(jid)
+    class SubscribeToManager(BasePeriodicBehaviour):
+        agent: 'DriverAgent'
+
+        def __init__(
+            self,
+            period: float,
+            start_at: Optional[datetime] = None,
+        ):
+            super().__init__(period, logger_name=LOGGER_NAME, start_at=start_at)
+
+        async def on_start(self):
+            self._logger.debug('SubscribeToManager running...')
+            self.agent.presence.on_subscribe = self.on_subscribe
+            self.agent.presence.on_subscribed = self.on_subscribed
+
+        async def run(self):
+            manager_jid = aioxmpp.JID.fromstr(self.agent._config.MANAGER_JID)
+            if manager_jid not in self.agent.presence.get_contacts() \
+                or self.agent.presence.get_contact(manager_jid).get('subscription', None) == 'none':
+                self.agent.presence.unsubscribe(self.agent._config.MANAGER_JID)
+                self._logger.info(f'{self.agent._config.MANAGER_JID} have not accepted subscription.')
+                self._logger.info(f'Subscribing to {self._config.MANAGER_JID}.')
+                self.agent.presence.subscribe(self.agent._config.MANAGER_JID)
+
+        async def on_end(self):
+            self._logger.debug('SubscribeToManager ending...')
+
+        def on_subscribe(self, jid: str):
+            self._logger.info(f'Agent {jid} asked for subscription.')
+            if jid == self._config.MANAGER_JID:
+                self.presence.approve(jid)
+                self.presence.subscribe(jid)
+
+        def on_subscribed(self, jid: str):
+            self._logger.info(f'Agent {jid} accepted subscription.')
 
     async def setup(self):
         self._logger.info('DriverAgent started')
         await self._setup_receive_request_driver_data()
         await self._setup_receive_inform_path_change()
         await self._setup_inform_driver_data()
+        await self._setup_subscribe_to_manager()
         self.add_behaviour(self.receive_request_driver_data, self.receive_request_driver_data_template)
         self.add_behaviour(self.receive_inform_path_change, self.receive_inform_path_change_template)
-
-        self.presence.set_available(show=PresenceShow.CHAT)
-        self.presence.on_subscribe = self.on_subscribe
-        self.presence.subscribe(self._config.MANAGER_JID)
+        self.add_behaviour(self.subscribe_to_manager)
 
     def set_current_path(self, path: Any):
         self.__current_path = path
@@ -154,6 +184,9 @@ class DriverAgent(agent.Agent):
 
     async def _setup_inform_driver_data(self):
         self.inform_driver_data = self.InformDriverData()
+
+    async def _setup_subscribe_to_manager(self):
+        self.subscribe_to_manager = self.SubscribeToManager(period=self._config.DRIVER_SUBSCRITPION_CHECK_PERIOD)
 
     def _get_state(self) -> Dict[str, Any]:
         return {

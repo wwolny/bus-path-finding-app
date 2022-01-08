@@ -5,7 +5,7 @@
 #
 import asyncio
 import json
-from typing import Any, Generator
+from typing import Any
 
 import pytest
 from spade import agent, quit_spade
