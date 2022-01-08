@@ -75,10 +75,10 @@ class DummyAgent(agent.Agent):
 
     async def setup(self):
         print('Agent starting...')
-        self.presence.set_available()
         self.presence.on_subscribe = self.on_subscribe
         self.presence.on_subscribed = self.on_subscribed
         self.presence.on_available = self.on_available
+        print(self.presence.get_contacts())
 
 
 if __name__ == '__main__':

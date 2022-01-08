@@ -6,3 +6,4 @@
 
 from .base_cyclic_behaviour import BaseCyclicBehaviour  # noqa
 from .base_one_shot_behaviour import BaseOneShotBehaviour  # noqa
+from .base_periodic_behaviour import BasePeriodicBehaviour  # noqa
