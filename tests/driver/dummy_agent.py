@@ -61,8 +61,24 @@ class DummyAgent(agent.Agent):
             await self.agent.stop()
             print(f'Behaviour finished with exit code {self.exit_code}.')
 
+    def on_available(self, jid, stanza):
+        print("[{}] Agent {} is available.".format(self.name, jid.split("@")[0]))
+
+    def on_subscribed(self, jid):
+        print("[{}] Agent {} has accepted the subscription.".format(self.name, jid.split("@")[0]))
+        print("[{}] Contacts List: {}".format(self.name, self.presence.get_contacts()))
+
+    def on_subscribe(self, jid):
+        print("[{}] Agent {} asked for subscription. Let's approve it.".format(self.name, jid.split("@")[0]))
+        self.presence.approve(jid)
+        self.presence.subscribe(jid)
+
     async def setup(self):
         print('Agent starting...')
+        self.presence.set_available()
+        self.presence.on_subscribe = self.on_subscribe
+        self.presence.on_subscribed = self.on_subscribed
+        self.presence.on_available = self.on_available
 
 
 if __name__ == '__main__':

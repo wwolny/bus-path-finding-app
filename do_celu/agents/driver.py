@@ -9,6 +9,7 @@ from logging import Logger
 from time import sleep
 from typing import Any, Dict, Optional
 
+from aioxmpp.structs import PresenceShow
 from spade import agent, quit_spade
 from spade.message import Message
 
@@ -122,6 +123,12 @@ class DriverAgent(agent.Agent):
         async def on_end(self):
             self._logger.debug('ReceiveInformPathChange ending...')
 
+    def on_subscribe(self, jid: str):
+        self._logger.info(f'Agent {jid.split("@")[0]} asked for subscription.')
+        if jid == self._config.MANAGER_JID:
+            self.presence.approve(jid)
+            self.presence.subscribe(jid)
+
     async def setup(self):
         self._logger.info('DriverAgent started')
         await self._setup_receive_request_driver_data()
@@ -129,6 +136,10 @@ class DriverAgent(agent.Agent):
         await self._setup_inform_driver_data()
         self.add_behaviour(self.receive_request_driver_data, self.receive_request_driver_data_template)
         self.add_behaviour(self.receive_inform_path_change, self.receive_inform_path_change_template)
+
+        self.presence.set_available(show=PresenceShow.CHAT)
+        self.presence.on_subscribe = self.on_subscribe
+        self.presence.subscribe(self._config.MANAGER_JID)
 
     def set_current_path(self, path: Any):
         self.__current_path = path
