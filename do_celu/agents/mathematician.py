@@ -9,6 +9,10 @@ from spade.behaviour import CyclicBehaviour
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 
+from do_celu.utils.performatives import Performatives
+from do_celu.entities.connection import ConnectionRequest, Connection
+from do_celu.utils.job_exit_code import JobExitCode
+from do_celu.config import Config, get_config
 
 graph=[ [ 0 , 4 ,20 ,16 ,14 ,17 , 3 , 8 ,19 ,19 ],
         [ 4 , 0 , 6 ,11 ,20 , 1 ,13 ,10 , 8 , 3 ],
@@ -21,29 +25,9 @@ graph=[ [ 0 , 4 ,20 ,16 ,14 ,17 , 3 , 8 ,19 ,19 ],
         [19 , 8 ,13 ,10 , 8 , 7 ,12 ,15 , 0 , 9 ],
         [19 , 3 ,19 , 6 , 5 ,12 , 6 ,11 , 9 , 0 ]]
 
-
-
 class MathAgent(agent.Agent):
-    class InformBestPath(BaseOneShotBehaviour):
-        async def run(self):
-            
-            pass
-
-        async def run(self):
-            pass
-
-        async def on_end(self):
-            pass
-
-    class RecvRequestBestPath(BaseOneShotBehaviour):
-        
-        
-        async def on_start(self):
-            pass
-            
-
-
-        async def tsp(needed, busroutes):
+    class InformBestPath(BaseOneShotBehaviour):      
+        def tsp(needed, busroutes):
             nbuses = len(busroutes)
             for i in range (len(needed)):
                 temp = 0
@@ -79,25 +63,39 @@ class MathAgent(agent.Agent):
 
         async def run(self):
             print("Calculating the best route.")
-            busroutes = tsp()
+            #busroutes = tsp()
             msg = Message(to=Config.MANAGER_JID)
             msg.set_metadata("performative", Performatives.REQUEST)
             #msg.body = 
-            
-        async def on_end(self):
-            pass
+            try:
+                await self.send(msg)
+                self._logger.debug("Sending the best routes!")
+            except Exception as e:
+                self._logger.error(e)
+                self.kill(JobExitCode.FAILURE)
+                return
 
+    class RecvRequestBestPath(BaseOneShotBehaviour):
         
-    
-    class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
         async def run(self):
-            print('Receiving available drivers request...')
+            print('Receiving the client demand...')
             msg = await self.receive(timeout=30)
             if msg:
-                print("Receiving available drivers request successful - Body: {}".format(msg.body))
-                # TODO trigger getting driver data (find all available drivers and RequestDriverData)
+                print("Receiving the client demand succesfull - Body: {}".format(msg.body))
+                # TODO trigger getting the data
             else:
-                print("Receiving available drivers request failed after 30 seconds")
+                print("Receiving the client demand failed after 30 seconds")
+            
+    
+    class ReceiveBusRoutes(BaseOneShotBehaviour):
+        async def run(self):
+            print('Receiving the bus routes and client demand...')
+            msg = await self.receive(timeout=30)
+            if msg:
+                print("Receiving the bus routes and client demand successful - Body: {}".format(msg.body))
+                # TODO trigger getting the data
+            else:
+                print("Receiving the bus routes and client demand failed after 30 seconds")
 
 
     async def setup(self):
