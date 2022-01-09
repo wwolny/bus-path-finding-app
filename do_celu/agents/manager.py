@@ -245,13 +245,21 @@ class ManagerAgent(agent.Agent):
     class AcceptClientPathProposal(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('AcceptClientPathProposal running...')
+
         async def run(self):
-            print('Accepting client path proposal...')
             msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.ACCEPT_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
-            print('Accepting client path proposal successful')
+            self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.debug(f'AcceptClientPathProposal ended with status: {self.exit_code.name}')
 
     async def setup(self):
         self._logger.info('ManagerAgent started')
@@ -266,7 +274,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.InformClientBestPaths()))
         # self.add_behaviour((self.CFPClientChoosePath()))
         # self.add_behaviour((self.ReceiveClientPathProposal()))
-        self.add_behaviour((self.InformDriverPathChange()))
+        # self.add_behaviour((self.InformDriverPathChange()))
+        # self.add_behaviour((self.AcceptClientPathProposal()))
 
 
 if __name__ == '__main__':
