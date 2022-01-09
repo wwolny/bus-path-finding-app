@@ -4,14 +4,33 @@
 # Copyright 2022 Agenty 007
 #
 
-from spade import agent
+from time import sleep
+from logging import Logger
+from spade import agent, quit_spade
 from spade.message import Message
 from do_celu.utils.performatives import Performatives
 from do_celu.behaviours import BaseOneShotBehaviour
-from do_celu.config import Config
+from do_celu.config import Config, get_config
+from do_celu.context import get_logger
 
 
 class ManagerAgent(agent.Agent):
+    # Behaviours:
+    receive_welcome_driver_msg: 'ReceiveWelcomeDriverMsg'
+    receive_available_drivers_request: 'ReceiveAvailableDriversRequest'
+    request_driver_data: 'RequestDriverData'
+    receive_driver_data: 'ReceiveDriverData'
+    request_best_paths: 'RequestBestPaths'
+    receive_best_paths: 'ReceiveBestPaths'
+    inform_client_best_paths: 'InformClientBestPaths'
+    cfp_client_choose_path: 'CFPClientChoosePath'
+    receive_client_path_proposal: 'ReceiveClientPathProposal'
+    inform_driver_path_change: 'InformDriverPathChange'
+    accept_client_path_proposal: 'AcceptClientPathProposal'
+    # Agent state:
+
+    _logger: Logger
+    _config: Config
 
     class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
 
@@ -136,11 +155,23 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour(beh)
 
 
-# TODO temp test
-# manager = ManagerAgent('manager@localhost', 'manager_password')
-# future = manager.start()
-# manager.add_behaviour(manager.RequestDriverData())
-# manager.add_behaviour(manager.RequestBestPaths())
-# future.result()
-#
-# manager.stop()
+if __name__ == '__main__':
+    config = get_config()
+    logger = get_logger(config.MANAGER_LOGGER_NAME)
+    manager = ManagerAgent(
+        config.MANAGER_JID,
+        config.MANAGER_PASSWORD,
+    )
+
+    future = manager.start()
+    future.result()
+
+    while manager.is_alive():
+        try:
+            sleep(1)
+        except KeyboardInterrupt:
+            break
+
+    manager.stop()
+    logger.debug('Manager agent stopped')
+    quit_spade()
