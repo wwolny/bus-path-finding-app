@@ -16,6 +16,7 @@ from spade.message import Message
 from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
+from do_celu.messages.client import BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate
 from do_celu.entities.connection import ConnectionRequest, Connection
 from do_celu.utils.job_exit_code import JobExitCode
 from do_celu.utils.performatives import Performatives
@@ -27,9 +28,12 @@ class ClientAgent(agent.Agent):
     # Behaviours:
     request_available_connections: 'RequestAvailableConnections'
     receive_inform_best_connections: 'ReceiveInformBestConnections'
+    receive_inform_best_connections_template: 'BestConnectionsTemplate'
     receive_availability_for_reservation: 'ReceiveAvailabilityForReservation'
+    receive_availability_for_reservation_template: 'ReservationAvailabilityTemplate'
     propose_chosen_connection: 'ProposeChosenConnection'
     receive_accept_proposal_client_path: 'ReceiveAcceptProposalClientPath'
+    receive_accept_proposal_client_path_template: 'AcceptProposalTemplate'
 
     # Agent state:
     __start_date: datetime
@@ -191,8 +195,8 @@ class ClientAgent(agent.Agent):
         await self._setup_receive_availability_for_reservation()
 
         self.add_behaviour(self.request_available_connections)
-        self.add_behaviour(self.receive_inform_best_connections)
-        self.add_behaviour(self.receive_availability_for_reservation)
+        self.add_behaviour(self.receive_inform_best_connections, self.receive_inform_best_connections_template)
+        self.add_behaviour(self.receive_availability_for_reservation, self.receive_availability_for_reservation_template)
 
     def set_best_connections(self, best_connections: List[Connection]):
         self.__best_connections = best_connections
@@ -212,25 +216,25 @@ class ClientAgent(agent.Agent):
         await self._setup_receive_accept_proposal_client_path()
 
         self.add_behaviour(self.propose_chosen_connection)
-        self.add_behaviour(self.receive_accept_proposal_client_path)
+        self.add_behaviour(self.receive_accept_proposal_client_path, self.receive_accept_proposal_client_path_template)
 
     async def _setup_request_available_connections(self):
         self.request_available_connections = self.RequestAvailableConnections()
 
     async def _setup_receive_inform_best_connections(self):
+        self.receive_inform_best_connections_template = BestConnectionsTemplate()
         self.receive_inform_best_connections = self.ReceiveInformBestConnections()
-        # todo: template
 
     async def _setup_receive_availability_for_reservation(self):
+        self.receive_availability_for_reservation_template = ReservationAvailabilityTemplate()
         self.receive_availability_for_reservation = self.ReceiveAvailabilityForReservation()
-        # todo: template
 
     async def _setup_propose_chosen_connection(self):
         self.propose_chosen_connection = self.ProposeChosenConnection()
 
     async def _setup_receive_accept_proposal_client_path(self):
+        self.receive_accept_proposal_client_path_template = AcceptProposalTemplate()
         self.receive_accept_proposal_client_path = self.ReceiveAcceptProposalClientPath()
-        # todo: template
 
     def _get_connection_request(self):
         return ConnectionRequest(self.__start_date, self.__origin, self.__destination)
