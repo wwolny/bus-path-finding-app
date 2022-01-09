@@ -226,13 +226,21 @@ class ManagerAgent(agent.Agent):
     class InformDriverPathChange(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('InformDriverPathChange running...')
+
         async def run(self):
-            print('Informing driver about path change...')
             msg = Message(to='driver@localhost')  # TODO select good driver
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
-            print('Informing driver about path change successful')
+            self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.debug(f'InformDriverPathChange ended with status: {self.exit_code.name}')
 
     class AcceptClientPathProposal(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -257,7 +265,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.ReceiveBestPaths()))
         # self.add_behaviour((self.InformClientBestPaths()))
         # self.add_behaviour((self.CFPClientChoosePath()))
-        self.add_behaviour((self.ReceiveClientPathProposal()))
+        # self.add_behaviour((self.ReceiveClientPathProposal()))
+        self.add_behaviour((self.InformDriverPathChange()))
 
 
 if __name__ == '__main__':
