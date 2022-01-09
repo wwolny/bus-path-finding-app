@@ -55,14 +55,23 @@ class ManagerAgent(agent.Agent):
     class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('ReceiveAvailableDriversRequest running...')
+
         async def run(self):
-            print('Receiving available drivers request...')
             msg = await self.receive(timeout=30)
             if msg:
-                print("Receiving available drivers request successful - Body: {}".format(msg.body))
+                print(f"ReceiveAvailableDriversRequest msg received with body: {msg.body}")
                 # TODO trigger getting driver data (find all available drivers and RequestDriverData)
+                self.exit_code = JobExitCode.SUCCESS
             else:
-                print("Receiving available drivers request failed after 30 seconds")
+                self.exit_code = JobExitCode.FAILURE
+
+        async def on_end(self):
+            self._logger.debug(f'ReceiveAvailableDriversRequest ended with status: {self.exit_code.name}')
 
     class RequestDriverData(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -78,9 +87,9 @@ class ManagerAgent(agent.Agent):
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
+            self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self.exit_code = JobExitCode.SUCCESS
             self._logger.debug(f'RequestDriverData ended with status: {self.exit_code.name}')
 
     class ReceiveDriverData(BaseOneShotBehaviour):
@@ -178,7 +187,8 @@ class ManagerAgent(agent.Agent):
 
     async def setup(self):
         self._logger.info('ManagerAgent started')
-        self.add_behaviour((self.RequestDriverData())) #TODO temp remove
+        # self.add_behaviour((self.RequestDriverData())) #TODO temp remove
+        # self.add_behaviour((self.ReceiveAvailableDriversRequest()))  # TODO temp remove
 
 
 if __name__ == '__main__':
