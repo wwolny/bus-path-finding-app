@@ -40,6 +40,7 @@ class ManagerAgent(agent.Agent):
         self._logger = get_logger(LOGGER_NAME)
 
     class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Receiving welcome driver msg...')
@@ -51,6 +52,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving welcome driver msg failed after 30 seconds")
 
     class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Receiving available drivers request...')
@@ -62,6 +64,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving available drivers request failed after 30 seconds")
 
     class RequestDriverData(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Requesting driver data...')
@@ -72,6 +75,7 @@ class ManagerAgent(agent.Agent):
             print('Requesting driver data successful')
 
     class ReceiveDriverData(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Receiving driver data...')
@@ -84,6 +88,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving driver data failed after 30 seconds")
 
     class RequestBestPaths(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Requesting best paths...')
@@ -94,6 +99,7 @@ class ManagerAgent(agent.Agent):
             print('Requesting best paths successful')
 
     class ReceiveBestPaths(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Receiving best paths...')
@@ -105,6 +111,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving best paths failed after 30 seconds")
 
     class InformClientBestPaths(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Informing client about best paths...')
@@ -115,6 +122,7 @@ class ManagerAgent(agent.Agent):
             print('Informing client about best paths successful')
 
     class CFPClientChoosePath(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Call for proposal client choosing path...')
@@ -125,6 +133,7 @@ class ManagerAgent(agent.Agent):
             print('Call for proposal client choosing path successful')
 
     class ReceiveClientPathProposal(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Receiving client path proposal...')
@@ -137,6 +146,7 @@ class ManagerAgent(agent.Agent):
                 print("Receiving client path proposal failed after 30 seconds")
 
     class InformDriverPathChange(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Informing driver about path change...')
@@ -147,6 +157,7 @@ class ManagerAgent(agent.Agent):
             print('Informing driver about path change successful')
 
     class AcceptClientPathProposal(BaseOneShotBehaviour):
+        agent: 'ManagerAgent'
 
         async def run(self):
             print('Accepting client path proposal...')
@@ -158,8 +169,6 @@ class ManagerAgent(agent.Agent):
 
     async def setup(self):
         print("Hello World! I'm agent {}".format(str(self.jid)))
-        # beh = self.RequestDriverData()
-        # self.add_behaviour(beh)
 
 
 if __name__ == '__main__':
