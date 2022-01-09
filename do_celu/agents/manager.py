@@ -43,14 +43,23 @@ class ManagerAgent(agent.Agent):
     class ReceiveWelcomeDriverMsg(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('ReceiveWelcomeDriverMsg running...')
+
         async def run(self):
-            print('Receiving welcome driver msg...')
             msg = await self.receive(timeout=30)
             if msg:
-                print("Receiving welcome driver msg successful - Body: {}".format(msg.body))
+                print(f'ReceiveWelcomeDriverMsg msg received with body: {msg.body}')
                 # TODO add to driver list (contacts)
+                self.exit_code = JobExitCode.SUCCESS
             else:
-                print("Receiving welcome driver msg failed after 30 seconds")
+                self.exit_code = JobExitCode.FAILURE
+
+        async def on_end(self):
+            self._logger.debug(f'ReceiveWelcomeDriverMsg ended with status: {self.exit_code.name}')
 
     class ReceiveAvailableDriversRequest(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -64,7 +73,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f"ReceiveAvailableDriversRequest msg received with body: {msg.body}")
+                print(f'ReceiveAvailableDriversRequest msg received with body: {msg.body}')
                 # TODO trigger getting driver data (find all available drivers and RequestDriverData)
                 self.exit_code = JobExitCode.SUCCESS
             else:
@@ -187,8 +196,11 @@ class ManagerAgent(agent.Agent):
 
     async def setup(self):
         self._logger.info('ManagerAgent started')
-        # self.add_behaviour((self.RequestDriverData())) #TODO temp remove
-        # self.add_behaviour((self.ReceiveAvailableDriversRequest()))  # TODO temp remove
+
+        # TODO temp remove
+        # self.add_behaviour((self.RequestDriverData()))
+        # self.add_behaviour((self.ReceiveAvailableDriversRequest()))
+        self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
 
 
 if __name__ == '__main__':
