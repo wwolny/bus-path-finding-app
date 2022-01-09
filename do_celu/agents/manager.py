@@ -204,15 +204,24 @@ class ManagerAgent(agent.Agent):
     class ReceiveClientPathProposal(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('ReceiveClientPathProposal running...')
+
         async def run(self):
-            print('Receiving client path proposal...')
             msg = await self.receive(timeout=30)
             if msg:
-                print("Receiving client path proposal successful - Body: {}".format(msg.body))
+                print(f'ReceiveClientPathProposal msg received with body: {msg.body}')
                 # TODO send info to driver
                 # TODO after that accept proposal
+                self.exit_code = JobExitCode.SUCCESS
             else:
-                print("Receiving client path proposal failed after 30 seconds")
+                self.exit_code = JobExitCode.FAILURE
+
+        async def on_end(self):
+            self._logger.debug(f'ReceiveClientPathProposal ended with status: {self.exit_code.name}')
 
     class InformDriverPathChange(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -247,7 +256,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.RequestBestPaths()))
         # self.add_behaviour((self.ReceiveBestPaths()))
         # self.add_behaviour((self.InformClientBestPaths()))
-        self.add_behaviour((self.CFPClientChoosePath()))
+        # self.add_behaviour((self.CFPClientChoosePath()))
+        self.add_behaviour((self.ReceiveClientPathProposal()))
 
 
 if __name__ == '__main__':
