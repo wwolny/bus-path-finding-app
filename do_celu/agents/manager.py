@@ -104,15 +104,24 @@ class ManagerAgent(agent.Agent):
     class ReceiveDriverData(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('ReceiveDriverData running...')
+
         async def run(self):
-            print('Receiving driver data...')
             msg = await self.receive(timeout=30)
             if msg:
-                print("Receiving driver data successful - Body: {}".format(msg.body))
+                print(f'ReceiveDriverData msg received with body: {msg.body}')
                 # TODO trigger getting best paths (maybe after x seconds after first respond)
                 # - prob move to other behavior
+                self.exit_code = JobExitCode.SUCCESS
             else:
-                print("Receiving driver data failed after 30 seconds")
+                self.exit_code = JobExitCode.FAILURE
+
+        async def on_end(self):
+            self._logger.debug(f'ReceiveDriverData ended with status: {self.exit_code.name}')
 
     class RequestBestPaths(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -200,7 +209,8 @@ class ManagerAgent(agent.Agent):
         # TODO temp remove
         # self.add_behaviour((self.RequestDriverData()))
         # self.add_behaviour((self.ReceiveAvailableDriversRequest()))
-        self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
+        # self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
+        self.add_behaviour((self.ReceiveDriverData()))
 
 
 if __name__ == '__main__':
