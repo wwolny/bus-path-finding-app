@@ -126,13 +126,21 @@ class ManagerAgent(agent.Agent):
     class RequestBestPaths(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('RequestBestPaths running...')
+
         async def run(self):
-            print('Requesting best paths...')
-            msg = Message(to=Config.MATHEMATICIAN_JID)
+            msg = Message(to=self.agent._config.MATHEMATICIAN_JID)
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
-            print('Requesting best paths successful')
+            self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.debug(f'RequestBestPaths ended with status: {self.exit_code.name}')
 
     class ReceiveBestPaths(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -210,7 +218,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.RequestDriverData()))
         # self.add_behaviour((self.ReceiveAvailableDriversRequest()))
         # self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
-        self.add_behaviour((self.ReceiveDriverData()))
+        # self.add_behaviour((self.ReceiveDriverData()))
+        self.add_behaviour((self.RequestBestPaths()))
 
 
 if __name__ == '__main__':
