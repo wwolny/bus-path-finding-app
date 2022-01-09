@@ -12,6 +12,7 @@ from do_celu.utils.performatives import Performatives
 from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
+from do_celu.utils.job_exit_code import JobExitCode
 
 LOGGER_NAME = get_config().MANAGER_LOGGER_NAME
 
@@ -66,13 +67,21 @@ class ManagerAgent(agent.Agent):
     class RequestDriverData(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('RequestDriverData running...')
+
         async def run(self):
-            print('Requesting driver data...')
             msg = Message(to='driver@localhost')  # TODO send to all available drivers
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
-            print('Requesting driver data successful')
+
+        async def on_end(self):
+            self.exit_code = JobExitCode.SUCCESS
+            self._logger.debug(f'RequestDriverData ended with status: {self.exit_code.name}')
 
     class ReceiveDriverData(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -168,7 +177,8 @@ class ManagerAgent(agent.Agent):
             print('Accepting client path proposal successful')
 
     async def setup(self):
-        print("Hello World! I'm agent {}".format(str(self.jid)))
+        self._logger.info('ManagerAgent started')
+        self.add_behaviour((self.RequestDriverData())) #TODO temp remove
 
 
 if __name__ == '__main__':
