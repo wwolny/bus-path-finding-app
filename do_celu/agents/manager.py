@@ -185,13 +185,21 @@ class ManagerAgent(agent.Agent):
     class CFPClientChoosePath(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('CFPClientChoosePath running...')
+
         async def run(self):
-            print('Call for proposal client choosing path...')
             msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.CALL_FOR_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
-            print('Call for proposal client choosing path successful')
+            self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.debug(f'CFPClientChoosePath ended with status: {self.exit_code.name}')
 
     class ReceiveClientPathProposal(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -238,7 +246,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.ReceiveDriverData()))
         # self.add_behaviour((self.RequestBestPaths()))
         # self.add_behaviour((self.ReceiveBestPaths()))
-        self.add_behaviour((self.InformClientBestPaths()))
+        # self.add_behaviour((self.InformClientBestPaths()))
+        self.add_behaviour((self.CFPClientChoosePath()))
 
 
 if __name__ == '__main__':
