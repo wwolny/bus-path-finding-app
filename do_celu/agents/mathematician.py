@@ -96,15 +96,15 @@ class MathematicianAgent(agent.Agent):
                             mincost = currcost
                             temp = j
 
-            busroute = busroutes[temp]
-            temp2 = needed[i]
-            if busroute[len(busroute)-1] != temp2[0]:
+                busroute = busroutes[temp]
+                temp2 = needed[i]
+                if busroute[len(busroute)-1] != temp2[0]:
+                    busroute.append(0)
+                    busroute[len(busroute)-1] = temp2[0]
                 busroute.append(0)
-                busroute[len(busroute)-1] = temp2[0]
-            busroute.append(0)
-            busroute[len(busroute)-1] = temp2[1]
-            busroutes.pop(temp)
-            busroutes.insert(temp,busroute)
+                busroute[len(busroute)-1] = temp2[1]
+                busroutes.pop(temp)
+                busroutes.insert(temp,busroute)
             return busroutes
 
         async def run(self):
