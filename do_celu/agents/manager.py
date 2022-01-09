@@ -13,7 +13,7 @@ from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
 
-LOGGER_NAME = get_config().DRIVER_LOGGER_NAME
+LOGGER_NAME = get_config().MANAGER_LOGGER_NAME
 
 
 class ManagerAgent(agent.Agent):
