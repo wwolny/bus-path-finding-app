@@ -166,13 +166,21 @@ class ManagerAgent(agent.Agent):
     class InformClientBestPaths(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
 
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('InformClientBestPaths running...')
+
         async def run(self):
-            print('Informing client about best paths...')
             msg = Message(to='client@localhost')  # TODO select good client
             msg.set_metadata('performative', Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
-            print('Informing client about best paths successful')
+            self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.debug(f'InformClientBestPaths ended with status: {self.exit_code.name}')
 
     class CFPClientChoosePath(BaseOneShotBehaviour):
         agent: 'ManagerAgent'
@@ -229,7 +237,8 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
         # self.add_behaviour((self.ReceiveDriverData()))
         # self.add_behaviour((self.RequestBestPaths()))
-        self.add_behaviour((self.ReceiveBestPaths()))
+        # self.add_behaviour((self.ReceiveBestPaths()))
+        self.add_behaviour((self.InformClientBestPaths()))
 
 
 if __name__ == '__main__':
