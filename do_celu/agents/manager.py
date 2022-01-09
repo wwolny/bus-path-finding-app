@@ -30,8 +30,8 @@ class ManagerAgent(agent.Agent):
     receive_client_path_proposal: 'ReceiveClientPathProposal'
     inform_driver_path_change: 'InformDriverPathChange'
     accept_client_path_proposal: 'AcceptClientPathProposal'
-    # Agent state:
 
+    # Agent state:
     _logger: Logger
     _config: Config
 
@@ -52,7 +52,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f'ReceiveWelcomeDriverMsg msg received with body: {msg.body}')
+                self._logger.debug(f'ReceiveWelcomeDriverMsg msg received with body: {msg.body}')
                 # TODO add to driver list (contacts)
                 self.exit_code = JobExitCode.SUCCESS
             else:
@@ -73,7 +73,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f'ReceiveAvailableDriversRequest msg received with body: {msg.body}')
+                self._logger.debug(f'ReceiveAvailableDriversRequest msg received with body: {msg.body}')
                 # TODO trigger getting driver data (find all available drivers and RequestDriverData)
                 self.exit_code = JobExitCode.SUCCESS
             else:
@@ -113,7 +113,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f'ReceiveDriverData msg received with body: {msg.body}')
+                self._logger.debug(f'ReceiveDriverData msg received with body: {msg.body}')
                 # TODO trigger getting best paths (maybe after x seconds after first respond)
                 # - prob move to other behavior
                 self.exit_code = JobExitCode.SUCCESS
@@ -133,7 +133,7 @@ class ManagerAgent(agent.Agent):
             self._logger.debug('RequestBestPaths running...')
 
         async def run(self):
-            msg = Message(to=self.agent._config.MATHEMATICIAN_JID)
+            msg = Message(to=self._config.MATHEMATICIAN_JID)
             msg.set_metadata('performative', Performatives.REQUEST)
             # msg.body = #TODO
             await self.send(msg)
@@ -154,7 +154,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f'ReceiveBestPaths msg received with body: {msg.body}')
+                self._logger.debug(f'ReceiveBestPaths msg received with body: {msg.body}')
                 # TODO send to client
                 self.exit_code = JobExitCode.SUCCESS
             else:
@@ -213,7 +213,7 @@ class ManagerAgent(agent.Agent):
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                print(f'ReceiveClientPathProposal msg received with body: {msg.body}')
+                self._logger.debug(f'ReceiveClientPathProposal msg received with body: {msg.body}')
                 # TODO send info to driver
                 # TODO after that accept proposal
                 self.exit_code = JobExitCode.SUCCESS
@@ -265,17 +265,17 @@ class ManagerAgent(agent.Agent):
         self._logger.info('ManagerAgent started')
 
         # TODO temp remove
-        # self.add_behaviour((self.RequestDriverData()))
-        # self.add_behaviour((self.ReceiveAvailableDriversRequest()))
-        # self.add_behaviour((self.ReceiveWelcomeDriverMsg()))
-        # self.add_behaviour((self.ReceiveDriverData()))
-        # self.add_behaviour((self.RequestBestPaths()))
-        # self.add_behaviour((self.ReceiveBestPaths()))
-        # self.add_behaviour((self.InformClientBestPaths()))
-        # self.add_behaviour((self.CFPClientChoosePath()))
-        # self.add_behaviour((self.ReceiveClientPathProposal()))
-        # self.add_behaviour((self.InformDriverPathChange()))
-        # self.add_behaviour((self.AcceptClientPathProposal()))
+        # self.add_behaviour(self.RequestDriverData())
+        # self.add_behaviour(self.ReceiveAvailableDriversRequest())
+        # self.add_behaviour(self.ReceiveWelcomeDriverMsg())
+        # self.add_behaviour(self.ReceiveDriverData())
+        # self.add_behaviour(self.RequestBestPaths())
+        # self.add_behaviour(self.ReceiveBestPaths())
+        # self.add_behaviour(self.InformClientBestPaths())
+        # self.add_behaviour(self.CFPClientChoosePath())
+        # self.add_behaviour(self.ReceiveClientPathProposal())
+        # self.add_behaviour(self.InformDriverPathChange())
+        # self.add_behaviour(self.AcceptClientPathProposal())
 
 
 if __name__ == '__main__':
