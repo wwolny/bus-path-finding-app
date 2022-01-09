@@ -31,9 +31,8 @@ LOGGER_NAME = get_config().MATHEMATICIAN_LOGGER_NAME
 
 class MathematicianAgent(agent.Agent):
     # Behaviours:
-    inform_best_path: 'InformBestPath'
-    receive_request_best_path: 'ReceiveRequestBestPath'
-    receive_bus_routes: 'ReceiveBusRoutes'
+    receive_request_best_paths: 'ReceiveRequestBestPaths'
+    inform_best_paths: 'InformBestPaths'
 
     # Agent state:
     _logger: Logger
@@ -44,7 +43,28 @@ class MathematicianAgent(agent.Agent):
         self._config = get_config()
         self._logger = get_logger(LOGGER_NAME)
 
-    class InformBestPath(BaseOneShotBehaviour):
+    class ReceiveRequestBestPaths(BaseOneShotBehaviour):
+        agent: 'MathematicianAgent'
+
+        def __init__(self, ):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.debug('ReceiveRequestBestPath running...')
+
+        async def run(self):
+            msg = await self.receive(timeout=30)
+            if msg:
+                self._logger.debug(f'ReceiveRequestBestPath msg received with body: {msg.body}')
+                # TODO trigger getting the data
+                self.exit_code = JobExitCode.SUCCESS
+            else:
+                self.exit_code = JobExitCode.FAILURE
+
+        async def on_end(self):
+            self._logger.debug(f'ReceiveRequestBestPath ended with status: {self.exit_code.name}')
+
+    class InformBestPaths(BaseOneShotBehaviour):
         agent: 'MathematicianAgent'
 
         def __init__(self,):
@@ -76,15 +96,15 @@ class MathematicianAgent(agent.Agent):
                             mincost = currcost
                             temp = j
 
-            busroute = busroutes[temp]
-            temp2 = needed[i]
-            if busroute[len(busroute)-1] != temp2[0]:
+                busroute = busroutes[temp]
+                temp2 = needed[i]
+                if busroute[len(busroute)-1] != temp2[0]:
+                    busroute.append(0)
+                    busroute[len(busroute)-1] = temp2[0]
                 busroute.append(0)
-                busroute[len(busroute)-1] = temp2[0]
-            busroute.append(0)
-            busroute[len(busroute)-1] = temp2[1]
-            busroutes.pop(temp)
-            busroutes.insert(temp,busroute)
+                busroute[len(busroute)-1] = temp2[1]
+                busroutes.pop(temp)
+                busroutes.insert(temp,busroute)
             return busroutes
 
         async def run(self):
@@ -104,55 +124,19 @@ class MathematicianAgent(agent.Agent):
         async def on_end(self):
             self._logger.debug(f'InformBestPath ended')
 
-    class ReceiveRequestBestPath(BaseOneShotBehaviour):
-        agent: 'MathematicianAgent'
-
-        def __init__(self, ):
-            super().__init__(LOGGER_NAME)
-
-        async def on_start(self):
-            self._logger.debug('ReceiveRequestBestPath running...')
-
-        async def run(self):
-            msg = await self.receive(timeout=30)
-            if msg:
-                self._logger.debug(f'ReceiveRequestBestPath msg received with body: {msg.body}')
-                # TODO trigger getting the data
-                self.exit_code = JobExitCode.SUCCESS
-            else:
-                self.exit_code = JobExitCode.FAILURE
-
-        async def on_end(self):
-            self._logger.debug(f'ReceiveRequestBestPath ended with status: {self.exit_code.name}')
-
-    class ReceiveBusRoutes(BaseOneShotBehaviour):
-        agent: 'MathematicianAgent'
-
-        def __init__(self, ):
-            super().__init__(LOGGER_NAME)
-
-        async def on_start(self):
-            self._logger.debug('ReceiveBusRoutes running...')
-
-        async def run(self):
-            msg = await self.receive(timeout=30)
-            if msg:
-                self._logger.debug(f'ReceiveBusRoutes msg received with body: {msg.body}')
-                # TODO trigger getting the data
-                self.exit_code = JobExitCode.SUCCESS
-            else:
-                self.exit_code = JobExitCode.FAILURE
-
-        async def on_end(self):
-            self._logger.debug(f'ReceiveBusRoutes ended with status: {self.exit_code.name}')
-
     async def setup(self):
         self._logger.info('MathematicianAgent started')
+        await self._setup_ReceiveRequestBestPaths()
+        await self._setup_InformBestPaths()
 
-        # TODO temp remove
-        # self.add_behaviour(self.InformBestPath())
-        # self.add_behaviour(self.ReceiveRequestBestPath())
-        # self.add_behaviour(self.ReceiveBusRoutes())
+        self.add_behaviour(self.ReceiveRequestBestPaths)
+        self.add_behaviour(self.InformBestPaths)
+
+    async def _setup_ReceiveRequestBestPaths(self):
+        self.receive_request_best_paths = self.RequestAvailableConnections() # TODO test
+
+    async def _setup_InformBestPaths(self):
+        self.inform_best_paths = self.RequestAvailableConnections() # TODO test
 
 
 if __name__ == '__main__':
