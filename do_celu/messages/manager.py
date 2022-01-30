@@ -34,3 +34,9 @@ class ReceiveDriverDataBody():
     capacity: int
     current_path: Optional[Any]
     geolocation: Dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ReceiveClientPositionBody():
+    origin: Dict[str, Any]
+    destination: Dict[str, Any]

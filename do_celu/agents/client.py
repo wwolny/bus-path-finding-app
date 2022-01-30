@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 from logging import Logger
 from time import sleep
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from spade import agent, quit_spade
 from spade.message import Message
@@ -16,8 +16,10 @@ from spade.message import Message
 from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
+from do_celu.messages.manager import ReceiveClientPositionBody
 from do_celu.messages.client import BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate
 from do_celu.entities.connection import ConnectionRequest, Connection
+from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.job_exit_code import JobExitCode
 from do_celu.utils.performatives import Performatives
 
@@ -62,18 +64,18 @@ class ClientAgent(agent.Agent):
     class RequestAvailableConnections(BaseOneShotBehaviour):
         agent: 'ClientAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
             self._logger.debug('RequestAvailableConnections running...')
 
         async def run(self):
-            msg = Message(to=Config.MANAGER_JID)
+            msg = Message(to=self._config.MANAGER_JID)
             msg.set_metadata("performative", Performatives.REQUEST)
             msg.set_metadata("ontology", self._config.ONTOLOGY)  # Set the ontology of the message content
             msg.set_metadata("language", "JSON")
-            msg.body = json.dumps(self.agent._get_connection_request())
+            msg.body = json.dumps(ReceiveClientPositionBody(**self.agent._get_state()), cls=DataclassJSONEncoder)
 
             try:
                 await self.send(msg)
@@ -91,7 +93,7 @@ class ClientAgent(agent.Agent):
     class ReceiveInformBestConnections(BaseOneShotBehaviour):
         agent: 'ClientAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
@@ -115,7 +117,7 @@ class ClientAgent(agent.Agent):
     class ReceiveAvailabilityForReservation(BaseOneShotBehaviour):
         agent: 'ClientAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
@@ -139,14 +141,14 @@ class ClientAgent(agent.Agent):
     class ProposeChosenConnection(BaseOneShotBehaviour):
         agent: 'ClientAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
             self._logger.debug('ProposeChosenConnection running...')
 
         async def run(self):
-            msg = Message(to=Config.MANAGER_JID)
+            msg = Message(to=self._config.MANAGER_JID)
             msg.set_metadata("performative", Performatives.PROPOSE)
             msg.set_metadata("ontology", self._config.ONTOLOGY)
             msg.set_metadata("language", "JSON")
@@ -167,7 +169,7 @@ class ClientAgent(agent.Agent):
     class ReceiveAcceptProposalClientPath(BaseOneShotBehaviour):
         agent: 'ClientAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
@@ -196,7 +198,8 @@ class ClientAgent(agent.Agent):
 
         self.add_behaviour(self.request_available_connections)
         self.add_behaviour(self.receive_inform_best_connections, self.receive_inform_best_connections_template)
-        self.add_behaviour(self.receive_availability_for_reservation, self.receive_availability_for_reservation_template)
+        self.add_behaviour(self.receive_availability_for_reservation,
+                           self.receive_availability_for_reservation_template)
 
     def set_best_connections(self, best_connections: List[Connection]):
         self.__best_connections = best_connections
@@ -238,6 +241,12 @@ class ClientAgent(agent.Agent):
 
     def _get_connection_request(self):
         return ConnectionRequest(self.__start_date, self.__origin, self.__destination)
+
+    def _get_state(self) -> Dict[str, Any]:
+        return {
+            'origin': self.__origin,
+            'destination': self.__destination,
+        }
 
 
 if __name__ == '__main__':
