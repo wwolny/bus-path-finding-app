@@ -18,7 +18,7 @@ from spade.presence import PresenceShow
 
 from do_celu.behaviours import BasePeriodicBehaviour, BaseOneShotBehaviour, BaseCyclicBehaviour
 from do_celu.messages.driver import RequestDriverDataMessage, PathChangeBody, RequestPathChangeMessage
-from do_celu.messages.manager import ReceiveDriverDataBody, ReceiveDriverDataTemplate, ReceiveClientPositionBody
+from do_celu.messages.manager import ReceiveDriverDataBody, ReceiveDriverDataTemplate, ReceiveClientPositionBody, ReceiveAvailableConnectionsTemplate
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.performatives import Performatives
 from do_celu.config import Config, get_config
@@ -34,6 +34,7 @@ class ManagerAgent(agent.Agent):
     request_all_drivers_data: 'RequestAllDriversData'
     request_driver_data: 'RequestDriverData'
     receive_driver_data: 'ReceiveDriverData'
+    receive_available_connections: 'ReceiveAvailableConnections'
     request_best_paths: 'RequestBestPaths'
     receive_best_paths: 'ReceiveBestPaths'
     inform_client_best_paths: 'InformClientBestPaths'
@@ -346,6 +347,7 @@ class ManagerAgent(agent.Agent):
         self._logger.info('ManagerAgent started')
         self._add_handle_subscriptions()
         self._add_receive_driver_data()
+        self._add_receive_available_connections()
 
         # self.add_behaviour(self.RequestDriverData())
         # self.add_behaviour(self.ReceiveAvailableDriversRequest())
@@ -382,6 +384,11 @@ class ManagerAgent(agent.Agent):
         self.receive_driver_data = self.ReceiveDriverData()
         self.add_behaviour(self.receive_driver_data, self.receive_inform_path_change_template)
 
+    def _add_receive_available_connections(self):
+        self.receive_available_connections_template = ReceiveAvailableConnectionsTemplate()
+        self.receive_available_connections = self.ReceiveAvailableConnections()
+        self.add_behaviour(self.receive_available_connections, self.receive_available_connections_template)
+
 
 if __name__ == '__main__':
     config = get_config()
@@ -394,12 +401,12 @@ if __name__ == '__main__':
     future = manager.start()
     future.result()
 
-    sleep(10)
-    manager._add_inform_driver_path_change(jid='1_driver@localhost', data=PathChangeBody(path=[1, 2, 1]))
-    manager._add_inform_driver_path_change(jid='2_driver@localhost', data=PathChangeBody(path=[2, 2, 2]))
-    manager._add_inform_driver_path_change(jid='3_driver@localhost', data=PathChangeBody(path=[3, 2, 3]))
-    sleep(10)
-    manager._add_request_all_drivers_data()
+    # sleep(10)
+    # manager._add_inform_driver_path_change(jid='1_driver@localhost', data=PathChangeBody(path=[1, 2, 1]))
+    # manager._add_inform_driver_path_change(jid='2_driver@localhost', data=PathChangeBody(path=[2, 2, 2]))
+    # manager._add_inform_driver_path_change(jid='3_driver@localhost', data=PathChangeBody(path=[3, 2, 3]))
+    # sleep(10)
+    # manager._add_request_all_drivers_data()
 
     while manager.is_alive():
         try:

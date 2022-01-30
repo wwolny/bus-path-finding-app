@@ -15,16 +15,10 @@ from do_celu.utils.job_exit_code import JobExitCode
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
 
-graph=[ [ 0 , 4 ,20 ,16 ,14 ,17 , 3 , 8 ,19 ,19 ],
-        [ 4 , 0 , 6 ,11 ,20 , 1 ,13 ,10 , 8 , 3 ],
-        [ 20 , 6 , 0 , 1 , 1 , 7 , 5 ,19 ,13 ,19],
-        [ 16 ,11 , 1 , 0 ,10 ,15 , 4 , 2 ,10 , 6],
-        [ 14 ,20 , 1 ,10 , 0 , 3 , 8 , 7 , 8 , 5],
-        [ 17 , 1 , 7 ,15 , 3 , 0 , 3 ,15 , 7 ,12],
-        [ 3 ,13 , 5 , 4 , 8 , 3 , 0 ,15 ,12 , 6 ],
-        [ 8 ,10 ,19 , 2 , 7 ,15 ,15 , 0 ,15 ,11 ],
-        [19 , 8 ,13 ,10 , 8 , 7 ,12 ,15 , 0 , 9 ],
-        [19 , 3 ,19 , 6 , 5 ,12 , 6 ,11 , 9 , 0 ]]
+graph = [[0, 4, 20, 16, 14, 17, 3, 8, 19, 19], [4, 0, 6, 11, 20, 1, 13, 10, 8, 3], [20, 6, 0, 1, 1, 7, 5, 19, 13, 19],
+         [16, 11, 1, 0, 10, 15, 4, 2, 10, 6], [14, 20, 1, 10, 0, 3, 8, 7, 8, 5], [17, 1, 7, 15, 3, 0, 3, 15, 7, 12],
+         [3, 13, 5, 4, 8, 3, 0, 15, 12, 6], [8, 10, 19, 2, 7, 15, 15, 0, 15, 11], [19, 8, 13, 10, 8, 7, 12, 15, 0, 9],
+         [19, 3, 19, 6, 5, 12, 6, 11, 9, 0]]
 
 LOGGER_NAME = get_config().MATHEMATICIAN_LOGGER_NAME
 
@@ -46,7 +40,7 @@ class MathematicianAgent(agent.Agent):
     class ReceiveRequestBestPaths(BaseOneShotBehaviour):
         agent: 'MathematicianAgent'
 
-        def __init__(self, ):
+        def __init__(self,):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
@@ -75,10 +69,10 @@ class MathematicianAgent(agent.Agent):
 
         def tsp(needed, busroutes):
             nbuses = len(busroutes)
-            for i in range (len(needed)):
+            for i in range(len(needed)):
                 temp = 0
                 mincost = 9999
-                for j in range (nbuses):
+                for j in range(nbuses):
                     currcost = 0
                     busroute = busroutes[j]
                     if len(busroutes[j]) == 1:
@@ -86,25 +80,26 @@ class MathematicianAgent(agent.Agent):
                         break
                     else:
                         temp2 = needed[i]
-                        for k in range (len(busroutes[j])-1):
-                            currcost += graph[busroute[k]][busroute[k+1]]
-                        if temp2[0] == busroute[len(busroute)-1]:
-                            currcost = currcost + graph[busroute[len(busroute)-1]][needed[i][1]]
+                        for k in range(len(busroutes[j]) - 1):
+                            currcost += graph[busroute[k]][busroute[k + 1]]
+                        if temp2[0] == busroute[len(busroute) - 1]:
+                            currcost = currcost + graph[busroute[len(busroute) - 1]][needed[i][1]]
                         else:
-                            currcost = currcost + graph[busroute[len(busroute)-1]][needed[i][0]] + graph[needed[i][0]][needed[i][1]]
-                        if currcost<mincost:
+                            currcost = currcost + graph[busroute[len(busroute) -
+                                                                 1]][needed[i][0]] + graph[needed[i][0]][needed[i][1]]
+                        if currcost < mincost:
                             mincost = currcost
                             temp = j
 
                 busroute = busroutes[temp]
                 temp2 = needed[i]
-                if busroute[len(busroute)-1] != temp2[0]:
+                if busroute[len(busroute) - 1] != temp2[0]:
                     busroute.append(0)
-                    busroute[len(busroute)-1] = temp2[0]
+                    busroute[len(busroute) - 1] = temp2[0]
                 busroute.append(0)
-                busroute[len(busroute)-1] = temp2[1]
+                busroute[len(busroute) - 1] = temp2[1]
                 busroutes.pop(temp)
-                busroutes.insert(temp,busroute)
+                busroutes.insert(temp, busroute)
             return busroutes
 
         async def run(self):
@@ -112,7 +107,7 @@ class MathematicianAgent(agent.Agent):
             # busroutes = tsp()
             msg = Message(to=self._config.MANAGER_JID)
             msg.set_metadata("performative", Performatives.INFORM)
-            #msg.body = 
+            #msg.body =
             try:
                 await self.send(msg)
                 self._logger.debug("Sending the best routes!")
@@ -133,10 +128,10 @@ class MathematicianAgent(agent.Agent):
         self.add_behaviour(self.InformBestPaths)
 
     async def _setup_ReceiveRequestBestPaths(self):
-        self.receive_request_best_paths = self.RequestAvailableConnections() # TODO test
+        self.receive_request_best_paths = self.RequestAvailableConnections()  # TODO test
 
     async def _setup_InformBestPaths(self):
-        self.inform_best_paths = self.RequestAvailableConnections() # TODO test
+        self.inform_best_paths = self.RequestAvailableConnections()  # TODO test
 
 
 if __name__ == '__main__':

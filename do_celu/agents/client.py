@@ -17,7 +17,7 @@ from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
 from do_celu.messages.manager import ReceiveClientPositionBody
-from do_celu.messages.client import BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate
+from do_celu.messages.client import BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate, RequestAvailableConnectionsMessage
 from do_celu.entities.connection import ConnectionRequest, Connection
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.job_exit_code import JobExitCode
@@ -71,19 +71,10 @@ class ClientAgent(agent.Agent):
             self._logger.debug('RequestAvailableConnections running...')
 
         async def run(self):
-            msg = Message(to=self._config.MANAGER_JID)
-            msg.set_metadata("performative", Performatives.REQUEST)
-            msg.set_metadata("ontology", self._config.ONTOLOGY)  # Set the ontology of the message content
-            msg.set_metadata("language", "JSON")
+            msg = RequestAvailableConnectionsMessage(to=self._config.MANAGER_JID)
             msg.body = json.dumps(ReceiveClientPositionBody(**self.agent._get_state()), cls=DataclassJSONEncoder)
-
-            try:
-                await self.send(msg)
-                self._logger.debug("Request for available connections sent!")
-            except Exception as e:
-                self._logger.error(e)
-                self.kill(JobExitCode.FAILURE)
-                return
+            await self.send(msg)
+            self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
             self._logger.debug('RequestAvailableConnections ending...')
@@ -248,6 +239,10 @@ class ClientAgent(agent.Agent):
             'destination': self.__destination,
         }
 
+    def _add_request_available_connections(self):
+        self.request_available_connections = self.RequestAvailableConnections()
+        self.add_behaviour(self.request_available_connections)
+
 
 if __name__ == '__main__':
     config = get_config()
@@ -262,6 +257,9 @@ if __name__ == '__main__':
 
     future = client.start()
     future.result()
+
+    sleep(10)
+    client._add_request_available_connections()
 
     while client.is_alive():
         try:

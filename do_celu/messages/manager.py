@@ -29,6 +29,19 @@ class ReceiveDriverDataMessage(_ReceiveDriverDataMessageBase, Message):
     pass
 
 
+class _ReceiveAvailableConnectionsMessageBase(BaseMessage):
+
+    def _set_custom_properties(self) -> None:
+        self.set_metadata("performative", Performatives.REQUEST.value)
+        self.set_metadata("ontology", self._config.ONTOLOGY)
+        self.set_metadata("language", "JSON")
+        self.set_metadata('behaviour', 'receive_available_connections')
+
+
+class ReceiveAvailableConnectionsTemplate(_ReceiveAvailableConnectionsMessageBase, Template):
+    pass
+
+
 @dataclass(frozen=True)
 class ReceiveDriverDataBody():
     capacity: int
