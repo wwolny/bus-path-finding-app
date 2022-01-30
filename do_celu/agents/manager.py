@@ -18,7 +18,7 @@ from spade.presence import PresenceShow
 
 from do_celu.behaviours import BasePeriodicBehaviour, BaseOneShotBehaviour, BaseCyclicBehaviour
 from do_celu.messages.driver import RequestDriverDataMessage, PathChangeBody, RequestPathChangeMessage
-from do_celu.messages.manager import ReceiveDriverDataBody, ReceiveDriverDataTemplate
+from do_celu.messages.manager import ReceiveDriverDataBody, ReceiveDriverDataTemplate, ReceiveClientPositionBody
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.performatives import Performatives
 from do_celu.config import Config, get_config
@@ -47,6 +47,7 @@ class ManagerAgent(agent.Agent):
     _logger: Logger
     _config: Config
     _drivers_data: Dict[str, ReceiveDriverDataBody]
+    _client_data: Dict[str, ReceiveClientPositionBody]
 
     def __init__(self, jid: str, password: str, verify_security: bool = False):
         super().__init__(jid, password, verify_security=verify_security)
@@ -56,6 +57,9 @@ class ManagerAgent(agent.Agent):
 
     def set_driver_data(self, jid: str, data: ReceiveDriverDataBody) -> None:
         self._drivers_data[jid] = data
+
+    def set_client_data(self, jid: str, data: ReceiveClientPositionBody) -> None:
+        self._client_data[jid] = data
 
     class RequestAllDriversData(BaseOneShotBehaviour):
         """
@@ -125,6 +129,31 @@ class ManagerAgent(agent.Agent):
 
         async def on_end(self):
             self._logger.info(f'ReceiveDriverData ended with status: {self.exit_code}')
+
+    class ReceiveAvailableConnections(BaseCyclicBehaviour):
+        """Handle data recivied from client."""
+        agent: 'ManagerAgent'
+
+        def __init__(self,):
+            super().__init__(LOGGER_NAME)
+
+        async def on_start(self):
+            self._logger.info('ReceiveAvailableConnections running...')
+
+        async def run(self):
+            msg = await self.receive()
+            if msg:
+                self._logger.debug(f'Message received with content: {msg.body}')
+                sender = str(msg.sender).split('/')[0]
+                body = json.loads(msg.body)
+                data = ReceiveClientPositionBody(**body)
+                self._logger.debug(f'Sender: {sender} - Client data: {vars(data)}')
+                self.agent.set_client_data(jid=sender, data=data)
+                self.agent._add_request_all_drivers_data()
+                self.exit_code = JobExitCode.SUCCESS
+
+        async def on_end(self):
+            self._logger.info(f'ReceiveAvailableConnections ended with status: {self.exit_code}')
 
     class RequestBestPaths(BaseOneShotBehaviour):
         agent: 'ManagerAgent'

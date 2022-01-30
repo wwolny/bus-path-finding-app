@@ -33,10 +33,10 @@ class ReceiveDriverDataMessage(_ReceiveDriverDataMessageBase, Message):
 class ReceiveDriverDataBody():
     capacity: int
     current_path: Optional[Any]
-    geolocation: Dict[str, Any]
+    geolocation: int
 
 
 @dataclass(frozen=True)
 class ReceiveClientPositionBody():
-    origin: Dict[str, Any]
-    destination: Dict[str, Any]
+    origin: int
+    destination: int

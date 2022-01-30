@@ -39,8 +39,8 @@ class ClientAgent(agent.Agent):
 
     # Agent state:
     __start_date: datetime
-    __origin: str
-    __destination: str
+    __origin: int
+    __destination: int
     __best_connections: Optional[List[Connection]]
     __chosen_connection: Optional[Connection]
     __reservation_available: bool
@@ -49,7 +49,7 @@ class ClientAgent(agent.Agent):
     _logger: Logger
     _config: Config
 
-    def __init__(self, jid: str, password: str, start_date: datetime, origin: str, destination: str):
+    def __init__(self, jid: str, password: str, start_date: datetime, origin: int, destination: int):
         super().__init__(jid, password)
         self._config = get_config()
         self._logger = get_logger(LOGGER_NAME)
@@ -252,23 +252,23 @@ class ClientAgent(agent.Agent):
 if __name__ == '__main__':
     config = get_config()
     logger = get_logger(LOGGER_NAME)
-    driver = ClientAgent(
+    client = ClientAgent(
         config.CLIENT_JID,
         config.CLIENT_PASSWORD,
         start_date=datetime.now(),
-        origin='Origin',
-        destination='Destination',
+        origin=1,
+        destination=5,
     )
 
-    future = driver.start()
+    future = client.start()
     future.result()
 
-    while driver.is_alive():
+    while client.is_alive():
         try:
             sleep(1)
         except KeyboardInterrupt:
             break
 
-    driver.stop()
+    client.stop()
     logger.debug('Client agent stopped')
     quit_spade()
