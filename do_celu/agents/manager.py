@@ -18,7 +18,14 @@ from spade.presence import PresenceShow
 
 from do_celu.behaviours import BasePeriodicBehaviour, BaseOneShotBehaviour, BaseCyclicBehaviour
 from do_celu.messages.driver import RequestDriverDataMessage, PathChangeBody, RequestPathChangeMessage
-from do_celu.messages.manager import ReceiveDriverDataBody, ReceiveDriverDataTemplate, ReceiveClientPositionBody
+from do_celu.messages.manager import (
+    ReceiveBestRoutesTemplate,
+    ReceiveDriverDataBody,
+    ReceiveDriverDataTemplate,
+    ReceiveBestPathsBody,
+    ReceiveClientPositionBody,
+)
+from do_celu.messages.mathematic import RequestBestPathsBody, RequestBestPathsMessage
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.performatives import Performatives
 from do_celu.config import Config, get_config
@@ -36,6 +43,7 @@ class ManagerAgent(agent.Agent):
     receive_driver_data: 'ReceiveDriverData'
     request_best_paths: 'RequestBestPaths'
     receive_best_paths: 'ReceiveBestPaths'
+    receive_best_paths_template: ReceiveBestRoutesTemplate
     inform_client_best_paths: 'InformClientBestPaths'
     cfp_client_choose_path: 'CFPClientChoosePath'
     receive_client_path_proposal: 'ReceiveClientPathProposal'
@@ -165,14 +173,21 @@ class ManagerAgent(agent.Agent):
             self._logger.debug('RequestBestPaths running...')
 
         async def run(self):
-            msg = Message(to=self._config.MATHEMATICIAN_JID)
-            msg.set_metadata('performative', Performatives.REQUEST)
+            # TODO: send real data from clients
+            bus_routes = [[0, 6, 11, 20], [20, 1, 10, 0]]
+            new_rides = [(1, 2), (3, 2)]
+
+            msg = RequestBestPathsMessage(to=self._config.MATHEMATICIAN_JID)
+            msg.body = json.dumps(
+                RequestBestPathsBody(bus_routes=bus_routes, new_rides=new_rides),
+                cls=DataclassJSONEncoder,
+            )
             await self.send(msg)
 
         async def on_end(self):
-            self._logger.debug(f'RequestBestPaths ended with status: {self.exit_code.name}')
+            self._logger.debug(f'RequestBestPaths ended with status: {self.exit_code}')
 
-    class ReceiveBestPaths(BaseOneShotBehaviour):
+    class ReceiveBestPaths(BaseCyclicBehaviour):
         agent: 'ManagerAgent'
 
         def __init__(self,):
@@ -182,13 +197,17 @@ class ManagerAgent(agent.Agent):
             self._logger.debug('ReceiveBestPaths running...')
 
         async def run(self):
-            msg = await self.receive(timeout=30)
+            msg = await self.receive()
             if msg:
-                self._logger.debug(f'ReceiveBestPaths msg received with body: {msg.body}')
-                # TODO send to client
+                self._logger.debug(f'Message received with content: {msg.body}')
+                sender = str(msg.sender).split('/')[0]
+                body = json.loads(msg.body)
+                data = ReceiveBestPathsBody(**body)
+                self._logger.debug(f'Sender: {sender} - Driver data: {vars(data)}')
+
+                # TODO: probagate best paths
+
                 self.exit_code = JobExitCode.SUCCESS
-            else:
-                self.exit_code = JobExitCode.FAILURE
 
         async def on_end(self):
             self._logger.debug(f'ReceiveBestPaths ended with status: {self.exit_code.name}')
@@ -346,6 +365,7 @@ class ManagerAgent(agent.Agent):
         self._logger.info('ManagerAgent started')
         self._add_handle_subscriptions()
         self._add_receive_driver_data()
+        self._add_receive_best_routes()
 
         # self.add_behaviour(self.RequestDriverData())
         # self.add_behaviour(self.ReceiveAvailableDriversRequest())
@@ -382,6 +402,15 @@ class ManagerAgent(agent.Agent):
         self.receive_driver_data = self.ReceiveDriverData()
         self.add_behaviour(self.receive_driver_data, self.receive_inform_path_change_template)
 
+    def _add_request_best_routes(self):
+        self.request_best_paths = self.RequestBestPaths()
+        self.add_behaviour(self.request_best_paths)
+
+    def _add_receive_best_routes(self):
+        self.receive_best_paths_template = ReceiveBestRoutesTemplate()
+        self.receive_best_paths = self.ReceiveBestPaths()
+        self.add_behaviour(self.receive_best_paths, self.receive_best_paths_template)
+
 
 if __name__ == '__main__':
     config = get_config()
@@ -394,12 +423,8 @@ if __name__ == '__main__':
     future = manager.start()
     future.result()
 
-    sleep(10)
-    manager._add_inform_driver_path_change(jid='1_driver@localhost', data=PathChangeBody(path=[1, 2, 1]))
-    manager._add_inform_driver_path_change(jid='2_driver@localhost', data=PathChangeBody(path=[2, 2, 2]))
-    manager._add_inform_driver_path_change(jid='3_driver@localhost', data=PathChangeBody(path=[3, 2, 3]))
-    sleep(10)
-    manager._add_request_all_drivers_data()
+    sleep(1)
+    manager._add_request_best_routes()
 
     while manager.is_alive():
         try:
