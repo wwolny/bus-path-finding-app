@@ -171,7 +171,7 @@ class ManagerAgent(agent.Agent):
 
         async def run(self):
             # TODO: send real data from clients
-            bus_routes = [[0, 6, 11, 20], [20, 1, 10, 0]]
+            bus_routes = [[0, 6, 9, 7], [9, 1, 7, 0]]
             new_rides = [(1, 2), (3, 2)]
 
             msg = RequestBestPathsMessage(to=self._config.MATHEMATICIAN_JID)

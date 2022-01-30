@@ -123,7 +123,7 @@ class MathematicianAgent(agent.Agent):
             msg.body = json.dumps(ReceiveBestPathsBody(best_paths=busroutes), cls=DataclassJSONEncoder)
             try:
                 await self.send(msg)
-                self._logger.debug("Sending the best routes!")
+                self._logger.debug("Sending the best routes! - Best Routes: {0}".format(busroutes))
             except Exception as e:
                 self._logger.error(e)
                 self.kill(JobExitCode.FAILURE)
