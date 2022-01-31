@@ -59,20 +59,3 @@ class AcceptProposalTemplate(_AcceptProposalMessageBase, Template):
 
 class AcceptProposalMessage(_AcceptProposalMessageBase, Message):
     pass
-
-
-class _RequestAvailableConnectionsMessageBase(BaseMessage):
-
-    def _set_custom_properties(self) -> None:
-        self.set_metadata("performative", Performatives.REQUEST.value)
-        self.set_metadata("ontology", self._config.ONTOLOGY)
-        self.set_metadata("language", "JSON")
-        self.set_metadata('behaviour', 'request_available_connections')
-
-
-class RequestAvailableConnectionsTemplate(_RequestAvailableConnectionsMessageBase, Template):
-    pass
-
-
-class RequestAvailableConnectionsMessage(_RequestAvailableConnectionsMessageBase, Message):
-    pass

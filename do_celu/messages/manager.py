@@ -42,6 +42,10 @@ class ReceiveAvailableConnectionsTemplate(_ReceiveAvailableConnectionsMessageBas
     pass
 
 
+class ReceiveAvailableConnectionsMessage(_ReceiveAvailableConnectionsMessageBase, Message):
+    pass
+
+
 class _ReceiveBestRoutesMessageBase(BaseMessage):
 
     def _set_custom_properties(self) -> None:
