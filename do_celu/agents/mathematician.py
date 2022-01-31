@@ -58,7 +58,7 @@ class MathematicianAgent(agent.Agent):
                 sender = str(msg.sender).split('/')[0]
                 body = json.loads(msg.body)
                 data = RequestBestPathsBody(**body)
-                self._logger.debug(f'Sender: {sender} - Driver data: {vars(data)}')
+                self._logger.debug(f'Sender: {sender} - Mathematician data: {vars(data)}')
                 self.agent._add_inform_best_paths(sender=sender, request=data)
                 self.exit_code = JobExitCode.SUCCESS
 

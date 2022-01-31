@@ -17,7 +17,8 @@ from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
 from do_celu.messages.manager import ReceiveClientPositionBody
-from do_celu.messages.client import BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate, RequestAvailableConnectionsMessage
+from do_celu.messages.client import (BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate,
+                                     RequestAvailableConnectionsMessage)
 from do_celu.entities.connection import ConnectionRequest, Connection
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.job_exit_code import JobExitCode
@@ -73,8 +74,17 @@ class ClientAgent(agent.Agent):
         async def run(self):
             msg = RequestAvailableConnectionsMessage(to=self._config.MANAGER_JID)
             msg.body = json.dumps(ReceiveClientPositionBody(**self.agent._get_state()), cls=DataclassJSONEncoder)
-            await self.send(msg)
-            self.exit_code = JobExitCode.SUCCESS
+            # msg.body = json.dumps(ReceiveClientPositionBody(origin=self.agent.__origin,
+            #                                                 destination=self.agent.__destination),
+            #                       cls=DataclassJSONEncoder)
+            self._logger.debug('RequestAvailableConnections sending {0}'.format(self.agent._get_state()))
+            try:
+                await self.send(msg)
+                self._logger.debug("Sending connection availability request! - Client state: {0}".format(msg.body))
+            except Exception as e:
+                self._logger.error(e)
+                self.kill(JobExitCode.FAILURE)
+                return
 
         async def on_end(self):
             self._logger.debug('RequestAvailableConnections ending...')
@@ -91,7 +101,7 @@ class ClientAgent(agent.Agent):
             self._logger.debug('ReceiveInformBestConnections running...')
 
         async def run(self):
-            await self.agent.request_available_connections.join()
+            # await self.agent.request_available_connections.join()
 
             msg = await self.receive()
             if msg:
@@ -115,7 +125,7 @@ class ClientAgent(agent.Agent):
             self._logger.debug('ReceiveAvailabilityForReservation running...')
 
         async def run(self):
-            await self.agent.request_available_connections.join()
+            # await self.agent.request_available_connections.join()
 
             msg = await self.receive()
             if msg:
@@ -183,11 +193,11 @@ class ClientAgent(agent.Agent):
 
     async def setup(self):
         self._logger.info('ClientAgent started')
-        await self._setup_request_available_connections()
+        # await self._setup_request_available_connections()
         await self._setup_receive_inform_best_connections()
         await self._setup_receive_availability_for_reservation()
 
-        self.add_behaviour(self.request_available_connections)
+        # self.add_behaviour(self.request_available_connections)
         self.add_behaviour(self.receive_inform_best_connections, self.receive_inform_best_connections_template)
         self.add_behaviour(self.receive_availability_for_reservation,
                            self.receive_availability_for_reservation_template)
@@ -212,8 +222,8 @@ class ClientAgent(agent.Agent):
         self.add_behaviour(self.propose_chosen_connection)
         self.add_behaviour(self.receive_accept_proposal_client_path, self.receive_accept_proposal_client_path_template)
 
-    async def _setup_request_available_connections(self):
-        self.request_available_connections = self.RequestAvailableConnections()
+    # async def _setup_request_available_connections(self):
+    #     self.request_available_connections = self.RequestAvailableConnections()
 
     async def _setup_receive_inform_best_connections(self):
         self.receive_inform_best_connections_template = BestConnectionsTemplate()

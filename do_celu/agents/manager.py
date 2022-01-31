@@ -153,8 +153,8 @@ class ManagerAgent(agent.Agent):
                 body = json.loads(msg.body)
                 data = ReceiveClientPositionBody(**body)
                 self._logger.debug(f'Sender: {sender} - Client data: {vars(data)}')
-                self.agent.set_client_data(jid=sender, data=data)
-                self.agent._add_request_all_drivers_data()
+                # self.agent.set_client_data(jid=sender, data=data)
+                # self.agent._add_request_all_drivers_data()
                 self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
