@@ -1,4 +1,6 @@
-# AASD
+# Bus path finding app
+
+This project was created during Agents and actors based decision systems course at WUT.
 
 ## Requirements and installation
 To create and activate [virtual environnement](https://docs.python.org/3/tutorial/venv.html) run:
@@ -38,7 +40,7 @@ Behaviours:
 * ReceiveRequestDriverData - request driver data (state)
 * InformDriverData - Inform Manager with a current state
 
-## Tests 
+## Tests
 To run test execute command:
 ```
 PYTHONPATH=$(pwd) pytest tests
