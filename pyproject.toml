@@ -16,3 +16,13 @@ filterwarnings = [
     "ignore:::.*spade*",
     "ignore:::.*aioxmpp*",
 ]
+
+[tool.black]
+    line-length = 79
+    target-version = ["py38"]
+    include = '\.pyi?$'
+
+[tool.isort]
+    profile = "black"
+    multi_line_output = 3
+    py_version = 38
