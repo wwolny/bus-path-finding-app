@@ -11,12 +11,11 @@ from do_celu.utils.performatives import Performatives
 
 
 class _BestConnectionsMessageBase(BaseMessage):
-
     def _set_custom_properties(self) -> None:
         self.set_metadata("performative", Performatives.REQUEST.value)
         self.set_metadata("ontology", self._config.ONTOLOGY)
         self.set_metadata("language", "JSON")
-        self.set_metadata('behaviour', 'best_connections')
+        self.set_metadata("behaviour", "best_connections")
 
 
 class BestConnectionsTemplate(_BestConnectionsMessageBase, Template):
@@ -28,29 +27,31 @@ class BestConnectionsMessage(_BestConnectionsMessageBase, Message):
 
 
 class _ReservationAvailabilityMessageBase(BaseMessage):
-
     def _set_custom_properties(self) -> None:
         self.set_metadata("performative", Performatives.INFORM.value)
         self.set_metadata("ontology", self._config.ONTOLOGY)
         self.set_metadata("language", "JSON")
-        self.set_metadata('behaviour', 'reservation_availability')
+        self.set_metadata("behaviour", "reservation_availability")
 
 
-class ReservationAvailabilityTemplate(_ReservationAvailabilityMessageBase, Template):
+class ReservationAvailabilityTemplate(
+    _ReservationAvailabilityMessageBase, Template
+):
     pass
 
 
-class ReservationAvailabilityMessage(_ReservationAvailabilityMessageBase, Message):
+class ReservationAvailabilityMessage(
+    _ReservationAvailabilityMessageBase, Message
+):
     pass
 
 
 class _AcceptProposalMessageBase(BaseMessage):
-
     def _set_custom_properties(self) -> None:
         self.set_metadata("performative", Performatives.INFORM.value)
         self.set_metadata("ontology", self._config.ONTOLOGY)
         self.set_metadata("language", "JSON")
-        self.set_metadata('behaviour', 'accept_proposal')
+        self.set_metadata("behaviour", "accept_proposal")
 
 
 class AcceptProposalTemplate(_AcceptProposalMessageBase, Template):

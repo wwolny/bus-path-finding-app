@@ -6,6 +6,7 @@
 
 from abc import ABC
 from logging import Logger
+
 from spade.behaviour import CyclicBehaviour
 
 from do_celu.config import Config, get_config

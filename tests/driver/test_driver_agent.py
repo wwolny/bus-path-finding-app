@@ -29,8 +29,8 @@ def driver_agent() -> DriverAgent:
         config.DRIVER_PASSWORD,
         capacity=50,
         geolocation={
-            'x': 52.21905021340178,
-            'y': 21.011905061692943,
+            "x": 52.21905021340178,
+            "y": 21.011905061692943,
         },
     )
 
@@ -41,24 +41,36 @@ def driver_agent() -> DriverAgent:
 
 
 def test_driver_data_template_match():
-    assert RequestDriverDataTemplate().match(RequestDriverDataMessage(to='test'))
+    assert RequestDriverDataTemplate().match(
+        RequestDriverDataMessage(to="test")
+    )
 
 
 def test_driver_data_template_not_match():
-    assert not RequestDriverDataTemplate().match(RequestPathChangeMessage(to='test'))
+    assert not RequestDriverDataTemplate().match(
+        RequestPathChangeMessage(to="test")
+    )
 
 
 def test_path_change_template_match():
-    assert RequestPathChangeTemplate().match(RequestPathChangeMessage(to='test'))
+    assert RequestPathChangeTemplate().match(
+        RequestPathChangeMessage(to="test")
+    )
 
 
 def test_path_change_template_not_match():
-    assert not RequestPathChangeTemplate().match(RequestDriverDataMessage(to='test'))
+    assert not RequestPathChangeTemplate().match(
+        RequestDriverDataMessage(to="test")
+    )
 
 
 @pytest.mark.asyncio
-async def test_request_driver_data_one_shot_behaviour(driver_agent: DriverAgent):
-    await driver_agent.receive_request_driver_data.enqueue(RequestDriverDataMessage(to='test'))
+async def test_request_driver_data_one_shot_behaviour(
+    driver_agent: DriverAgent,
+):
+    await driver_agent.receive_request_driver_data.enqueue(
+        RequestDriverDataMessage(to="test")
+    )
     await asyncio.sleep(0.1)
 
     assert driver_agent.inform_driver_data.is_done() is True
@@ -73,7 +85,7 @@ async def test_request_driver_data_(driver_agent: DriverAgent):
         result: Any
 
         class TestBehaviour(OneShotBehaviour):
-            agent: 'DummyAgent'
+            agent: "DummyAgent"
 
             async def run(self):
                 msg = await self.receive(timeout=3)
@@ -87,7 +99,9 @@ async def test_request_driver_data_(driver_agent: DriverAgent):
     future = dummy.start()
     future.result()
 
-    await driver_agent.receive_request_driver_data.enqueue(RequestDriverDataMessage(to=config.MANAGER_JID))
+    await driver_agent.receive_request_driver_data.enqueue(
+        RequestDriverDataMessage(to=config.MANAGER_JID)
+    )
     await asyncio.sleep(0.1)
 
     dummy.stop()
@@ -99,16 +113,17 @@ async def test_request_driver_data_(driver_agent: DriverAgent):
 
 @pytest.mark.asyncio
 async def test_path_change(driver_agent: DriverAgent):
-    new_path = 'new_path'
+    new_path = "new_path"
     await driver_agent.receive_inform_path_change.enqueue(
         RequestPathChangeMessage(
-            to='test',
-            body=json.dumps({'path': new_path}),
-        ))
+            to="test",
+            body=json.dumps({"path": new_path}),
+        )
+    )
     await asyncio.sleep(0.1)
 
     driver_agent.stop()
     quit_spade()
 
     state = driver_agent._get_state()
-    assert state['current_path'] == new_path
+    assert state["current_path"] == new_path

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from logging import Logger, getLogger, basicConfig
+from logging import Logger, basicConfig, getLogger
 
 from do_celu.config import get_config
 

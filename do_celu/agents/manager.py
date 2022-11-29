@@ -16,37 +16,55 @@ from spade import agent, quit_spade
 from spade.message import Message
 from spade.presence import PresenceShow
 
-from do_celu.behaviours import BasePeriodicBehaviour, BaseOneShotBehaviour, BaseCyclicBehaviour
-from do_celu.messages.driver import RequestDriverDataMessage, PathChangeBody, RequestPathChangeMessage
-from do_celu.messages.manager import (ReceiveBestRoutesTemplate, ReceiveDriverDataBody, ReceiveDriverDataTemplate,
-                                      ReceiveBestPathsBody, ReceiveClientPositionBody,
-                                      ReceiveAvailableConnectionsTemplate)
-from do_celu.messages.mathematic import RequestBestPathsBody, RequestBestPathsMessage
-from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
-from do_celu.utils.performatives import Performatives
+from do_celu.behaviours import (
+    BaseCyclicBehaviour,
+    BaseOneShotBehaviour,
+    BasePeriodicBehaviour,
+)
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
+from do_celu.messages.driver import (
+    PathChangeBody,
+    RequestDriverDataMessage,
+    RequestPathChangeMessage,
+)
+from do_celu.messages.manager import (
+    ReceiveAvailableConnectionsTemplate,
+    ReceiveBestPathsBody,
+    ReceiveBestRoutesTemplate,
+    ReceiveClientPositionBody,
+    ReceiveDriverDataBody,
+    ReceiveDriverDataTemplate,
+)
+from do_celu.messages.mathematic import (
+    RequestBestPathsBody,
+    RequestBestPathsMessage,
+)
+from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.job_exit_code import JobExitCode
+from do_celu.utils.performatives import Performatives
 
 LOGGER_NAME = get_config().MANAGER_LOGGER_NAME
-DRIVER_JID_REGEXP = re.compile(fr'^\w+{get_config().DRIVER_JID_SUFFIX}(/\d+)?$')
+DRIVER_JID_REGEXP = re.compile(
+    rf"^\w+{get_config().DRIVER_JID_SUFFIX}(/\d+)?$"
+)
 
 
 class ManagerAgent(agent.Agent):
     # Behaviours:
-    request_all_drivers_data: 'RequestAllDriversData'
-    request_driver_data: 'RequestDriverData'
-    receive_driver_data: 'ReceiveDriverData'
-    receive_available_connections: 'ReceiveAvailableConnections'
-    request_best_paths: 'RequestBestPaths'
-    receive_best_paths: 'ReceiveBestPaths'
+    request_all_drivers_data: "RequestAllDriversData"
+    request_driver_data: "RequestDriverData"
+    receive_driver_data: "ReceiveDriverData"
+    receive_available_connections: "ReceiveAvailableConnections"
+    request_best_paths: "RequestBestPaths"
+    receive_best_paths: "ReceiveBestPaths"
     receive_best_paths_template: ReceiveBestRoutesTemplate
-    inform_client_best_paths: 'InformClientBestPaths'
-    cfp_client_choose_path: 'CFPClientChoosePath'
-    receive_client_path_proposal: 'ReceiveClientPathProposal'
-    inform_driver_path_change: 'InformDriverPathChange'
-    accept_client_path_proposal: 'AcceptClientPathProposal'
-    handle_subscriptions: 'HandleSubscriptions'
+    inform_client_best_paths: "InformClientBestPaths"
+    cfp_client_choose_path: "CFPClientChoosePath"
+    receive_client_path_proposal: "ReceiveClientPathProposal"
+    inform_driver_path_change: "InformDriverPathChange"
+    accept_client_path_proposal: "AcceptClientPathProposal"
+    handle_subscriptions: "HandleSubscriptions"
 
     # Agent state:
     _logger: Logger
@@ -63,37 +81,47 @@ class ManagerAgent(agent.Agent):
     def set_driver_data(self, jid: str, data: ReceiveDriverDataBody) -> None:
         self._drivers_data[jid] = data
 
-    def set_client_data(self, jid: str, data: ReceiveClientPositionBody) -> None:
+    def set_client_data(
+        self, jid: str, data: ReceiveClientPositionBody
+    ) -> None:
         self._client_data[jid] = data
 
     class RequestAllDriversData(BaseOneShotBehaviour):
         """
         Request data from all available dirvers.
         """
-        agent: 'ManagerAgent'
+
+        agent: "ManagerAgent"
 
         def __init__(self):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.info('RequestAllDriversData running...')
+            self._logger.info("RequestAllDriversData running...")
 
         async def run(self):
             for jid, info in self.agent.presence.get_contacts().items():
-                self._logger.debug(f'Quering {jid}')
-                presence: aioxmpp.Presence = info.get('presence', None)
-                self._logger.debug(f'Presence {presence}')
-                if DRIVER_JID_REGEXP.match(str(jid)) and presence and presence.type_ == aioxmpp.PresenceType.AVAILABLE:
+                self._logger.debug(f"Quering {jid}")
+                presence: aioxmpp.Presence = info.get("presence", None)
+                self._logger.debug(f"Presence {presence}")
+                if (
+                    DRIVER_JID_REGEXP.match(str(jid))
+                    and presence
+                    and presence.type_ == aioxmpp.PresenceType.AVAILABLE
+                ):
                     self.agent._add_request_driver_data(jid=str(jid))
 
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.info(f'RequestAllDriversData ended with status: {self.exit_code}')
+            self._logger.info(
+                f"RequestAllDriversData ended with status: {self.exit_code}"
+            )
 
     class RequestDriverData(BaseOneShotBehaviour):
         """Request a specified (jid) driver data."""
-        agent: 'ManagerAgent'
+
+        agent: "ManagerAgent"
         _jid: str
 
         def __init__(self, jid: str):
@@ -101,7 +129,7 @@ class ManagerAgent(agent.Agent):
             self._jid = jid
 
         async def on_start(self):
-            self._logger.info('RequestDriverData running...')
+            self._logger.info("RequestDriverData running...")
 
         async def run(self):
             msg = RequestDriverDataMessage(to=self._jid)
@@ -109,65 +137,88 @@ class ManagerAgent(agent.Agent):
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.info(f'RequestDriverData ended with status: {self.exit_code}')
+            self._logger.info(
+                f"RequestDriverData ended with status: {self.exit_code}"
+            )
 
     class ReceiveDriverData(BaseCyclicBehaviour):
-        """Handle data recivied from drivers and save it to dictionary (_drivers_data)."""
-        agent: 'ManagerAgent'
+        """Handle data received from drivers and save it to dict."""
 
-        def __init__(self,):
+        agent: "ManagerAgent"
+
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.info('ReceiveDriverData running...')
+            self._logger.info("ReceiveDriverData running...")
 
         async def run(self):
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
-                sender = str(msg.sender).split('/')[0]
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
+                sender = str(msg.sender).split("/")[0]
                 body = json.loads(msg.body)
                 data = ReceiveDriverDataBody(**body)
-                self._logger.debug(f'Sender: {sender} - Driver data: {vars(data)}')
+                self._logger.debug(
+                    f"Sender: {sender} - Driver data: {vars(data)}"
+                )
                 self.agent.set_driver_data(jid=sender, data=data)
                 self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.info(f'ReceiveDriverData ended with status: {self.exit_code}')
+            self._logger.info(
+                f"ReceiveDriverData ended with status: {self.exit_code}"
+            )
 
     class ReceiveAvailableConnections(BaseCyclicBehaviour):
         """Handle data recivied from client."""
-        agent: 'ManagerAgent'
 
-        def __init__(self,):
+        agent: "ManagerAgent"
+
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.info('ReceiveAvailableConnections running...')
+            self._logger.info("ReceiveAvailableConnections running...")
 
         async def run(self):
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
-                sender = str(msg.sender).split('/')[0]
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
+                sender = str(msg.sender).split("/")[0]
                 body = json.loads(msg.body)
                 data = ReceiveClientPositionBody(**body)
-                self._logger.debug(f'Sender: {sender} - Client data: {vars(data)}')
+                self._logger.debug(
+                    f"Sender: {sender} - Client data: {vars(data)}"
+                )
                 # self.agent.set_client_data(jid=sender, data=data)
                 # self.agent._add_request_all_drivers_data()
                 self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.info(f'ReceiveAvailableConnections ended with status: {self.exit_code}')
+            self._logger.info(
+                "ReceiveAvailableConnections ended with status:"
+                f"{self.exit_code}"
+            )
 
     class RequestBestPaths(BaseOneShotBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('RequestBestPaths running...')
+            self._logger.debug("RequestBestPaths running...")
 
         async def run(self):
             # TODO: send real data from clients
@@ -176,90 +227,118 @@ class ManagerAgent(agent.Agent):
 
             msg = RequestBestPathsMessage(to=self._config.MATHEMATICIAN_JID)
             msg.body = json.dumps(
-                RequestBestPathsBody(bus_routes=bus_routes, new_rides=new_rides),
+                RequestBestPathsBody(
+                    bus_routes=bus_routes, new_rides=new_rides
+                ),
                 cls=DataclassJSONEncoder,
             )
             await self.send(msg)
 
         async def on_end(self):
-            self._logger.debug(f'RequestBestPaths ended with status: {self.exit_code}')
+            self._logger.debug(
+                f"RequestBestPaths ended with status: {self.exit_code}"
+            )
 
     class ReceiveBestPaths(BaseCyclicBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('ReceiveBestPaths running...')
+            self._logger.debug("ReceiveBestPaths running...")
 
         async def run(self):
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
-                sender = str(msg.sender).split('/')[0]
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
+                sender = str(msg.sender).split("/")[0]
                 body = json.loads(msg.body)
                 data = ReceiveBestPathsBody(**body)
-                self._logger.debug(f'Sender: {sender} - Driver data: {vars(data)}')
+                self._logger.debug(
+                    f"Sender: {sender} - Driver data: {vars(data)}"
+                )
 
                 # TODO: probagate best paths
 
                 self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.debug(f'ReceiveBestPaths ended with status: {self.exit_code.name}')
+            self._logger.debug(
+                f"ReceiveBestPaths ended with status: {self.exit_code.name}"
+            )
 
     class InformClientBestPaths(BaseOneShotBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
+            self.exit_code = None
 
         async def on_start(self):
-            self._logger.debug('InformClientBestPaths running...')
+            self._logger.debug("InformClientBestPaths running...")
 
         async def run(self):
-            msg = Message(to='client@localhost')  # TODO select good client
-            msg.set_metadata('performative', Performatives.INFORM)
+            msg = Message(to="client@localhost")  # TODO select good client
+            msg.set_metadata("performative", Performatives.INFORM)
             # msg.body = #TODO
             await self.send(msg)
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.debug(f'InformClientBestPaths ended with status: {self.exit_code.name}')
+            self._logger.debug(
+                f"InformClientBestPaths ended with status:"
+                f"{self.exit_code.name}"
+            )
 
     class CFPClientChoosePath(BaseOneShotBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('CFPClientChoosePath running...')
+            self._logger.debug("CFPClientChoosePath running...")
 
         async def run(self):
-            msg = Message(to='client@localhost')  # TODO select good client
-            msg.set_metadata('performative', Performatives.CALL_FOR_PROPOSAL)
+            msg = Message(to="client@localhost")  # TODO select good client
+            msg.set_metadata("performative", Performatives.CALL_FOR_PROPOSAL)
             # msg.body = #TODO
             await self.send(msg)
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.debug(f'CFPClientChoosePath ended with status: {self.exit_code.name}')
+            self._logger.debug(
+                f"CFPClientChoosePath ended with status: {self.exit_code.name}"
+            )
 
     class ReceiveClientPathProposal(BaseOneShotBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
+            self.exit_code = None
 
         async def on_start(self):
-            self._logger.debug('ReceiveClientPathProposal running...')
+            self._logger.debug("ReceiveClientPathProposal running...")
 
         async def run(self):
             msg = await self.receive(timeout=30)
             if msg:
-                self._logger.debug(f'ReceiveClientPathProposal msg received with body: {msg.body}')
+                self._logger.debug(
+                    f"ReceiveClientPathProposal msg received with body: "
+                    f"{msg.body}"
+                )
                 # TODO send info to driver
                 # TODO after that accept proposal
                 self.exit_code = JobExitCode.SUCCESS
@@ -267,11 +346,15 @@ class ManagerAgent(agent.Agent):
                 self.exit_code = JobExitCode.FAILURE
 
         async def on_end(self):
-            self._logger.debug(f'ReceiveClientPathProposal ended with status: {self.exit_code.name}')
+            self._logger.debug(
+                f"ReceiveClientPathProposal ended with status: "
+                f"{self.exit_code.name}"
+            )
 
     class InformDriverPathChange(BaseOneShotBehaviour):
         """Infrom a specific (jid) driver about his new path."""
-        agent: 'ManagerAgent'
+
+        agent: "ManagerAgent"
         _jid: str
         _data: PathChangeBody
 
@@ -281,7 +364,7 @@ class ManagerAgent(agent.Agent):
             self._data = data
 
         async def on_start(self):
-            self._logger.info('InformDriverPathChange running...')
+            self._logger.info("InformDriverPathChange running...")
 
         async def run(self):
             msg = RequestPathChangeMessage(to=self._jid)
@@ -290,54 +373,66 @@ class ManagerAgent(agent.Agent):
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.info(f'InformDriverPathChange ended with status: {self.exit_code}')
+            self._logger.info(
+                f"InformDriverPathChange ended with status: {self.exit_code}"
+            )
 
     class AcceptClientPathProposal(BaseOneShotBehaviour):
-        agent: 'ManagerAgent'
+        agent: "ManagerAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('AcceptClientPathProposal running...')
+            self._logger.debug("AcceptClientPathProposal running...")
 
         async def run(self):
-            msg = Message(to='client@localhost')  # TODO select good client
-            msg.set_metadata('performative', Performatives.ACCEPT_PROPOSAL)
+            msg = Message(to="client@localhost")  # TODO select good client
+            msg.set_metadata("performative", Performatives.ACCEPT_PROPOSAL)
             await self.send(msg)
             self.exit_code = JobExitCode.SUCCESS
 
         async def on_end(self):
-            self._logger.debug(f'AcceptClientPathProposal ended with status: {self.exit_code.name}')
+            self._logger.debug(
+                f"AcceptClientPathProposal ended with status: "
+                f"{self.exit_code.name}"
+            )
 
     class HandleSubscriptions(BasePeriodicBehaviour):
         """Monitor subscriptions to manager."""
-        agent: 'ManagerAgent'
+
+        agent: "ManagerAgent"
 
         def __init__(
             self,
             period: float,
             start_at: Optional[datetime] = None,
         ):
-            super().__init__(period, logger_name=LOGGER_NAME, start_at=start_at)
+            super().__init__(
+                period, logger_name=LOGGER_NAME, start_at=start_at
+            )
 
         async def on_start(self):
-            self._logger.info('SubscribeToManager running...')
+            self._logger.info("SubscribeToManager running...")
             self.agent.presence.on_subscribe = self.on_subscribe
             self.agent.presence.on_unsubscribe = self.on_unsubscribe
             self.agent.presence.on_unsubscribed = self.on_unsubscribed
             self.agent.presence.on_subscribed = self.on_subscribed
 
         async def run(self):
-            self._logger.debug('Checking contact list...')
+            self._logger.debug("Checking contact list...")
             for jid, info in self.agent.presence.get_contacts().items():
-                self._logger.debug(f"JID: {jid} - type: {info.get('presence', None)}")
+                self._logger.debug(
+                    f"JID: {jid} - type: {info.get('presence', None)}"
+                )
 
         async def on_end(self):
-            self._logger.info('SubscribeToManager ending...')
+            self._logger.info("SubscribeToManager ending...")
 
         def on_subscribe(self, jid: str):
-            self._logger.info(f'Agent {jid} asked for subscription.')
+            self._logger.info(f"Agent {jid} asked for subscription.")
 
             # Match dirvers JIDs
             if DRIVER_JID_REGEXP.match(jid):
@@ -345,7 +440,7 @@ class ManagerAgent(agent.Agent):
                 self.presence.subscribe(jid)
 
         def on_unsubscribe(self, jid: str):
-            self._logger.info(f'Agent {jid} asked for removeing subscription.')
+            self._logger.info(f"Agent {jid} asked for removeing subscription.")
 
             # Match dirvers JIDs
             if DRIVER_JID_REGEXP.match(jid):
@@ -353,13 +448,13 @@ class ManagerAgent(agent.Agent):
                 self.presence.unsubscribe(jid)
 
         def on_unsubscribed(self, jid: str):
-            self._logger.info(f'Agent {jid} asked for unsubscribed.')
+            self._logger.info(f"Agent {jid} asked for unsubscribed.")
 
         def on_subscribed(self, jid: str):
-            self._logger.info(f'Agent {jid} accepted subscription.')
+            self._logger.info(f"Agent {jid} accepted subscription.")
 
     async def setup(self):
-        self._logger.info('ManagerAgent started')
+        self._logger.info("ManagerAgent started")
         self._add_handle_subscriptions()
         self._add_receive_driver_data()
         self._add_receive_available_connections()
@@ -376,7 +471,7 @@ class ManagerAgent(agent.Agent):
         # self.add_behaviour(self.InformDriverPathChange())
         # self.add_behaviour(self.AcceptClientPathProposal())
 
-        self._logger.info('Setting presence to AVAILABLE')
+        self._logger.info("Setting presence to AVAILABLE")
         self.presence.set_available(show=PresenceShow.FREE_FOR_CHAT)
 
     def _add_handle_subscriptions(self):
@@ -384,7 +479,9 @@ class ManagerAgent(agent.Agent):
         self.add_behaviour(self.handle_subscriptions)
 
     def _add_inform_driver_path_change(self, jid: str, data: PathChangeBody):
-        self.inform_driver_path_change = self.InformDriverPathChange(jid=jid, data=data)
+        self.inform_driver_path_change = self.InformDriverPathChange(
+            jid=jid, data=data
+        )
         self.add_behaviour(self.inform_driver_path_change)
 
     def _add_request_driver_data(self, jid: str):
@@ -398,12 +495,19 @@ class ManagerAgent(agent.Agent):
     def _add_receive_driver_data(self):
         self.receive_inform_path_change_template = ReceiveDriverDataTemplate()
         self.receive_driver_data = self.ReceiveDriverData()
-        self.add_behaviour(self.receive_driver_data, self.receive_inform_path_change_template)
+        self.add_behaviour(
+            self.receive_driver_data, self.receive_inform_path_change_template
+        )
 
     def _add_receive_available_connections(self):
-        self.receive_available_connections_template = ReceiveAvailableConnectionsTemplate()
+        self.receive_available_connections_template = (
+            ReceiveAvailableConnectionsTemplate()
+        )
         self.receive_available_connections = self.ReceiveAvailableConnections()
-        self.add_behaviour(self.receive_available_connections, self.receive_available_connections_template)
+        self.add_behaviour(
+            self.receive_available_connections,
+            self.receive_available_connections_template,
+        )
 
     def _add_request_best_routes(self):
         self.request_best_paths = self.RequestBestPaths()
@@ -412,10 +516,12 @@ class ManagerAgent(agent.Agent):
     def _add_receive_best_routes(self):
         self.receive_best_paths_template = ReceiveBestRoutesTemplate()
         self.receive_best_paths = self.ReceiveBestPaths()
-        self.add_behaviour(self.receive_best_paths, self.receive_best_paths_template)
+        self.add_behaviour(
+            self.receive_best_paths, self.receive_best_paths_template
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     config = get_config()
     logger = get_logger(config.MANAGER_LOGGER_NAME)
     manager = ManagerAgent(
@@ -427,9 +533,15 @@ if __name__ == '__main__':
     future.result()
 
     sleep(10)
-    manager._add_inform_driver_path_change(jid='1_driver@localhost', data=PathChangeBody(path=[1, 2, 1]))
-    manager._add_inform_driver_path_change(jid='2_driver@localhost', data=PathChangeBody(path=[2, 2, 2]))
-    manager._add_inform_driver_path_change(jid='3_driver@localhost', data=PathChangeBody(path=[3, 2, 3]))
+    manager._add_inform_driver_path_change(
+        jid="1_driver@localhost", data=PathChangeBody(path=[1, 2, 1])
+    )
+    manager._add_inform_driver_path_change(
+        jid="2_driver@localhost", data=PathChangeBody(path=[2, 2, 2])
+    )
+    manager._add_inform_driver_path_change(
+        jid="3_driver@localhost", data=PathChangeBody(path=[3, 2, 3])
+    )
     sleep(10)
     manager._add_request_all_drivers_data()
     sleep(1)
@@ -442,5 +554,5 @@ if __name__ == '__main__':
             break
 
     manager.stop()
-    logger.debug('Manager agent stopped')
+    logger.debug("Manager agent stopped")
     quit_spade()

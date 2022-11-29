@@ -8,7 +8,7 @@ from typing import Dict, Optional
 
 from spade.message import MessageBase
 
-from do_celu.config import get_config, Config
+from do_celu.config import Config, get_config
 
 
 class BaseMessage(MessageBase, ABC):

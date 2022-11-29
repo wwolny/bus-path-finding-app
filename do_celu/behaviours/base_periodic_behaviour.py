@@ -4,10 +4,11 @@
 # Copyright 2022 Agenty 007
 #
 
-from datetime import datetime
 from abc import ABC
+from datetime import datetime
 from logging import Logger
 from typing import Optional
+
 from spade.behaviour import PeriodicBehaviour
 
 from do_celu.config import Config, get_config

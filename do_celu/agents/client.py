@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 from logging import Logger
 from time import sleep
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from spade import agent, quit_spade
 from spade.message import Message
@@ -16,9 +16,16 @@ from spade.message import Message
 from do_celu.behaviours import BaseOneShotBehaviour
 from do_celu.config import Config, get_config
 from do_celu.context import get_logger
-from do_celu.messages.manager import ReceiveClientPositionBody, ReceiveAvailableConnectionsMessage
-from do_celu.messages.client import (BestConnectionsTemplate, ReservationAvailabilityTemplate, AcceptProposalTemplate)
-from do_celu.entities.connection import ConnectionRequest, Connection
+from do_celu.entities.connection import Connection, ConnectionRequest
+from do_celu.messages.client import (
+    AcceptProposalTemplate,
+    BestConnectionsTemplate,
+    ReservationAvailabilityTemplate,
+)
+from do_celu.messages.manager import (
+    ReceiveAvailableConnectionsMessage,
+    ReceiveClientPositionBody,
+)
 from do_celu.utils.dataclass_json_encoder import DataclassJSONEncoder
 from do_celu.utils.job_exit_code import JobExitCode
 from do_celu.utils.performatives import Performatives
@@ -28,14 +35,14 @@ LOGGER_NAME = get_config().CLIENT_LOGGER_NAME
 
 class ClientAgent(agent.Agent):
     # Behaviours:
-    request_available_connections: 'RequestAvailableConnections'
-    receive_inform_best_connections: 'ReceiveInformBestConnections'
-    receive_inform_best_connections_template: 'BestConnectionsTemplate'
-    receive_availability_for_reservation: 'ReceiveAvailabilityForReservation'
-    receive_availability_for_reservation_template: 'ReservationAvailabilityTemplate'
-    propose_chosen_connection: 'ProposeChosenConnection'
-    receive_accept_proposal_client_path: 'ReceiveAcceptProposalClientPath'
-    receive_accept_proposal_client_path_template: 'AcceptProposalTemplate'
+    request_available_connections: "RequestAvailableConnections"
+    receive_inform_best_connections: "ReceiveInformBestConnections"
+    receive_inform_best_connections_template: "BestConnectionsTemplate"
+    receive_reservation_availability: "ReceiveAvailabilityForReservation"
+    receive_reservation_availability_temp: "ReservationAvailabilityTemplate"
+    propose_chosen_connection: "ProposeChosenConnection"
+    receive_accept_proposal_client_path: "ReceiveAcceptProposalClientPath"
+    receive_accept_proposal_client_path_template: "AcceptProposalTemplate"
 
     # Agent state:
     __start_date: datetime
@@ -49,7 +56,14 @@ class ClientAgent(agent.Agent):
     _logger: Logger
     _config: Config
 
-    def __init__(self, jid: str, password: str, start_date: datetime, origin: int, destination: int):
+    def __init__(
+        self,
+        jid: str,
+        password: str,
+        start_date: datetime,
+        origin: int,
+        destination: int,
+    ):
         super().__init__(jid, password)
         self._config = get_config()
         self._logger = get_logger(LOGGER_NAME)
@@ -62,83 +76,109 @@ class ClientAgent(agent.Agent):
         self.__connection_accepted = False
 
     class RequestAvailableConnections(BaseOneShotBehaviour):
-        agent: 'ClientAgent'
+        agent: "ClientAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
+            self.exit_code = None
 
         async def on_start(self):
-            self._logger.debug('RequestAvailableConnections running...')
+            self._logger.debug("RequestAvailableConnections running...")
 
         async def run(self):
-            msg = ReceiveAvailableConnectionsMessage(to=self._config.MANAGER_JID)
-            msg.body = json.dumps(ReceiveClientPositionBody(**self.agent._get_state()), cls=DataclassJSONEncoder)
-            self._logger.debug('RequestAvailableConnections sending {0}'.format(self.agent._get_state()))
+            msg = ReceiveAvailableConnectionsMessage(
+                to=self._config.MANAGER_JID
+            )
+            msg.body = json.dumps(
+                ReceiveClientPositionBody(**self.agent._get_state()),
+                cls=DataclassJSONEncoder,
+            )
+            self._logger.debug(
+                "RequestAvailableConnections sending {0}".format(
+                    self.agent._get_state()
+                )
+            )
             try:
                 await self.send(msg)
-                self._logger.debug("Sending connection availability request! - Client state: {0}".format(msg.body))
+                self._logger.debug(
+                    "Sending connection availability request!"
+                    "- Client state: {0}".format(msg.body)
+                )
             except Exception as e:
                 self._logger.error(e)
                 self.kill(JobExitCode.FAILURE)
                 return
 
         async def on_end(self):
-            self._logger.debug('RequestAvailableConnections ending...')
+            self._logger.debug("RequestAvailableConnections ending...")
             self.exit_code = JobExitCode.SUCCESS
 
-    # there is no sense that it will be CyclicBehaviour, because of one-time information about available connections
+    # there is no sense that it will be CyclicBehaviour,
+    # because of one-time information about available connections
     class ReceiveInformBestConnections(BaseOneShotBehaviour):
-        agent: 'ClientAgent'
+        agent: "ClientAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('ReceiveInformBestConnections running...')
+            self._logger.debug("ReceiveInformBestConnections running...")
 
         async def run(self):
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
                 body = json.loads(msg.body)
-                best_connections = body['best_connections']
+                best_connections = body["best_connections"]
                 self.agent.set_best_connections(best_connections)
 
             self.kill()
 
         async def on_end(self):
-            self._logger.debug('ReceiveInformBestConnections ending...')
+            self._logger.debug("ReceiveInformBestConnections ending...")
 
     class ReceiveAvailabilityForReservation(BaseOneShotBehaviour):
-        agent: 'ClientAgent'
+        agent: "ClientAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('ReceiveAvailabilityForReservation running...')
+            self._logger.debug("ReceiveAvailabilityForReservation running...")
 
         async def run(self):
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
                 body = json.loads(msg.body)
-                is_reservation_available = body['is_reservation_available']
+                is_reservation_available = body["is_reservation_available"]
                 self.agent.set_reservation_available(is_reservation_available)
 
             self.kill()
 
         async def on_end(self):
-            self._logger.debug('ReceiveAvailabilityForReservation ending...')
+            self._logger.debug("ReceiveAvailabilityForReservation ending...")
 
     class ProposeChosenConnection(BaseOneShotBehaviour):
-        agent: 'ClientAgent'
+        agent: "ClientAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('ProposeChosenConnection running...')
+            self._logger.debug("ProposeChosenConnection running...")
 
         async def run(self):
             msg = Message(to=self._config.MANAGER_JID)
@@ -156,41 +196,50 @@ class ClientAgent(agent.Agent):
                 return
 
         async def on_end(self):
-            self._logger.debug('ProposeChosenConnection ending...')
+            self._logger.debug("ProposeChosenConnection ending...")
             self.exit_code = JobExitCode.SUCCESS
 
     class ReceiveAcceptProposalClientPath(BaseOneShotBehaviour):
-        agent: 'ClientAgent'
+        agent: "ClientAgent"
 
-        def __init__(self,):
+        def __init__(
+            self,
+        ):
             super().__init__(LOGGER_NAME)
 
         async def on_start(self):
-            self._logger.debug('ReceiveAcceptProposalClientPath running...')
+            self._logger.debug("ReceiveAcceptProposalClientPath running...")
 
         async def run(self):
             await self.agent.propose_chosen_connection.join()
 
             msg = await self.receive()
             if msg:
-                self._logger.debug(f'Message received with content: {msg.body}')
+                self._logger.debug(
+                    f"Message received with content: {msg.body}"
+                )
                 body = json.loads(msg.body)
-                is_connection_accepted = body['is_connection_accepted']
+                is_connection_accepted = body["is_connection_accepted"]
                 self.agent.set_connection_accepted(is_connection_accepted)
 
             self.kill()
 
         async def on_end(self):
-            self._logger.debug('ReceiveAcceptProposalClientPath ending...')
+            self._logger.debug("ReceiveAcceptProposalClientPath ending...")
 
     async def setup(self):
-        self._logger.info('ClientAgent started')
+        self._logger.info("ClientAgent started")
         await self._setup_receive_inform_best_connections()
         await self._setup_receive_availability_for_reservation()
 
-        self.add_behaviour(self.receive_inform_best_connections, self.receive_inform_best_connections_template)
-        self.add_behaviour(self.receive_availability_for_reservation,
-                           self.receive_availability_for_reservation_template)
+        self.add_behaviour(
+            self.receive_inform_best_connections,
+            self.receive_inform_best_connections_template,
+        )
+        self.add_behaviour(
+            self.receive_availability_for_reservation,
+            self.receive_reservation_availability_temp,
+        )
 
     def set_best_connections(self, best_connections: List[Connection]):
         self.__best_connections = best_connections
@@ -210,30 +259,47 @@ class ClientAgent(agent.Agent):
         await self._setup_receive_accept_proposal_client_path()
 
         self.add_behaviour(self.propose_chosen_connection)
-        self.add_behaviour(self.receive_accept_proposal_client_path, self.receive_accept_proposal_client_path_template)
+        self.add_behaviour(
+            self.receive_accept_proposal_client_path,
+            self.receive_accept_proposal_client_path_template,
+        )
 
     async def _setup_receive_inform_best_connections(self):
-        self.receive_inform_best_connections_template = BestConnectionsTemplate()
-        self.receive_inform_best_connections = self.ReceiveInformBestConnections()
+        self.receive_inform_best_connections_template = (
+            BestConnectionsTemplate()
+        )
+        self.receive_inform_best_connections = (
+            self.ReceiveInformBestConnections()
+        )
 
     async def _setup_receive_availability_for_reservation(self):
-        self.receive_availability_for_reservation_template = ReservationAvailabilityTemplate()
-        self.receive_availability_for_reservation = self.ReceiveAvailabilityForReservation()
+        self.receive_reservation_availability_temp = (
+            ReservationAvailabilityTemplate()
+        )
+        self.receive_availability_for_reservation = (
+            self.ReceiveAvailabilityForReservation()
+        )
 
     async def _setup_propose_chosen_connection(self):
         self.propose_chosen_connection = self.ProposeChosenConnection()
 
     async def _setup_receive_accept_proposal_client_path(self):
-        self.receive_accept_proposal_client_path_template = AcceptProposalTemplate()
-        self.receive_accept_proposal_client_path = self.ReceiveAcceptProposalClientPath()
+        self.receive_accept_proposal_client_path_template = (
+            AcceptProposalTemplate()
+        )
+        self.receive_accept_proposal_client_path = (
+            self.ReceiveAcceptProposalClientPath()
+        )
 
     def _get_connection_request(self):
-        return ConnectionRequest(self.__start_date, self.__origin, self.__destination)
+        return ConnectionRequest(
+            self.__start_date, self.__origin, self.__destination
+        )
 
     def _get_state(self) -> Dict[str, Any]:
         return {
-            'origin': self.__origin,
-            'destination': self.__destination,
+            "origin": self.__origin,
+            "destination": self.__destination,
         }
 
     def _add_request_available_connections(self):
@@ -241,7 +307,7 @@ class ClientAgent(agent.Agent):
         self.add_behaviour(self.request_available_connections)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     config = get_config()
     logger = get_logger(LOGGER_NAME)
     client = ClientAgent(
@@ -265,5 +331,5 @@ if __name__ == '__main__':
             break
 
     client.stop()
-    logger.debug('Client agent stopped')
+    logger.debug("Client agent stopped")
     quit_spade()

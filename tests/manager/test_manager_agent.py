@@ -8,7 +8,10 @@ import pytest
 from do_celu.agents.manager import ManagerAgent
 from do_celu.config import get_config
 from do_celu.messages.client import ReservationAvailabilityMessage
-from do_celu.messages.manager import ReceiveDriverDataMessage, ReceiveDriverDataTemplate
+from do_celu.messages.manager import (
+    ReceiveDriverDataMessage,
+    ReceiveDriverDataTemplate,
+)
 
 
 @pytest.fixture
@@ -26,8 +29,12 @@ def manager_agent() -> ManagerAgent:
 
 
 def test_driver_data_template_match():
-    assert ReceiveDriverDataTemplate().match(ReceiveDriverDataMessage(to='test'))
+    assert ReceiveDriverDataTemplate().match(
+        ReceiveDriverDataMessage(to="test")
+    )
 
 
 def test_driver_data_template_not_match():
-    assert not ReceiveDriverDataTemplate().match(ReservationAvailabilityMessage(to='test'))
+    assert not ReceiveDriverDataTemplate().match(
+        ReservationAvailabilityMessage(to="test")
+    )
